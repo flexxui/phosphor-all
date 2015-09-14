@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 
+# node artifacts
+node_modules/
+index.js
+package.json
+
 # C extensions
 *.so
 
