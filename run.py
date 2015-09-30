@@ -2,11 +2,14 @@ import subprocess
 import json
 import os
 
+from flexx.util.minify import minify
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(THIS_DIR)
 
-modules = 'boxpanel', 'splitpanel', 'tabs', 'dockpanel'
+modules = ['messaging', 'widget', 'menus',
+           'boxpanel', 'gridpanel', 'splitpanel', 'stackedpanel', 'tabs', 'dockpanel',
+           ]
 
 package = """
 {
@@ -23,6 +26,15 @@ package = """
 }
 """.strip()
 
+CODE = """
+window.phosphor.createWidget = function (name) {
+    var ori = phosphor.widget.Widget.createNode;
+    phosphor.widget.Widget.createNode = function() {return document.createElement(name);};
+    var w = new phosphor.widget.Widget();
+    phosphor.widget.Widget.createNode = ori;
+    return w;
+};
+"""
 
 # Write package.json
 deps_dict = dict([('phosphor-' + m, 'latest') for m in modules])
@@ -39,9 +51,14 @@ code = ''
 code += 'window.phosphor = {};\n'
 for m in modules:
     code += 'window.phosphor.%s = require("phosphor-%s");\n' % (m, m)
+code += CODE
 open('index.js', 'wt').write(code)
 
 # Create bundle
 subprocess.check_call(['npm', 'install', 'browserify', 'browserify-css', 'uglify'], cwd=THIS_DIR)
-subprocess.check_call(['browserify', '-g', '[', 'browserify-css', '--minify=true', ']', 'index.js', '-o', 'phosphor.js'], cwd=THIS_DIR)
-subprocess.check_call(['uglify', '-s', 'phosphor.js', '-o', 'phosphor.min.js'], cwd=THIS_DIR)
+subprocess.check_call(['browserify', '-g', '[', 'browserify-css', '--minify=true', ']', 'index.js', '-o', 'phosphor-all.js'], cwd=THIS_DIR)
+subprocess.check_call(['uglify', '-s', 'phosphor.js', '-o', 'phosphor-all.min.js'], cwd=THIS_DIR)
+
+# Strip comments in non-minified
+text = open('phosphor-all.js', 'rt').read()
+open('phosphor-all.js', 'wt').write(minify(text, False))
