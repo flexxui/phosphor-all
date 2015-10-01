@@ -7,7 +7,9 @@ from flexx.util.minify import minify
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(THIS_DIR)
 
-modules = ['messaging', 'widget', 'menus',
+modules = ['disposable', 'messaging', 'properties', 'signaling',
+           'boxengine', 'domutil', 'nodewrapper',
+           'widget', 'menus',
            'boxpanel', 'gridpanel', 'splitpanel', 'stackedpanel', 'tabs', 'dockpanel',
            ]
 

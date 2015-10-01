@@ -1,6 +1,12 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 window.phosphor = {};
+window.phosphor.disposable = require("phosphor-disposable");
 window.phosphor.messaging = require("phosphor-messaging");
+window.phosphor.properties = require("phosphor-properties");
+window.phosphor.signaling = require("phosphor-signaling");
+window.phosphor.boxengine = require("phosphor-boxengine");
+window.phosphor.domutil = require("phosphor-domutil");
+window.phosphor.nodewrapper = require("phosphor-nodewrapper");
 window.phosphor.widget = require("phosphor-widget");
 window.phosphor.menus = require("phosphor-menus");
 window.phosphor.boxpanel = require("phosphor-boxpanel");
@@ -16,7 +22,7 @@ window.phosphor.createWidget = function (name) {
 	phosphor.widget.Widget.createNode = ori;
 	return w;
 };
-},{"phosphor-boxpanel":4,"phosphor-dockpanel":10,"phosphor-gridpanel":20,"phosphor-menus":25,"phosphor-messaging":36,"phosphor-splitpanel":40,"phosphor-stackedpanel":49,"phosphor-tabs":53,"phosphor-widget":66}],2:[function(require,module,exports){
+},{"phosphor-boxengine":3,"phosphor-boxpanel":5,"phosphor-disposable":10,"phosphor-dockpanel":12,"phosphor-domutil":22,"phosphor-gridpanel":24,"phosphor-menus":29,"phosphor-messaging":40,"phosphor-nodewrapper":42,"phosphor-properties":43,"phosphor-signaling":44,"phosphor-splitpanel":46,"phosphor-stackedpanel":55,"phosphor-tabs":59,"phosphor-widget":72}],2:[function(require,module,exports){
 'use strict';
 module.exports = {
 	createLink: function(href, attributes) {
@@ -58,8 +64,168 @@ module.exports = {
 	}
 };
 },{}],3:[function(require,module,exports){
+
+'use strict';
+
+var BoxSizer = (function () {
+	function BoxSizer() {
+
+		this.sizeHint = 0;
+
+		this.minSize = 0;
+
+		this.maxSize = Infinity;
+
+		this.stretch = 1;
+
+		this.size = 0;
+
+		this.done = false;
+	}
+	return BoxSizer;
+})();
+exports.BoxSizer = BoxSizer;
+
+function boxCalc(sizers, space) {
+	var count = sizers.length;
+	if (count === 0) {
+		return;
+	}
+	var totalMin = 0;
+	var totalMax = 0;
+	var totalSize = 0;
+	var totalStretch = 0;
+	var stretchCount = 0;
+	for (var i = 0; i < count; ++i) {
+		var sizer = sizers[i];
+		initSizer(sizer);
+		totalSize += sizer.size;
+		totalMin += sizer.minSize;
+		totalMax += sizer.maxSize;
+		if (sizer.stretch > 0) {
+			totalStretch += sizer.stretch;
+			stretchCount++;
+		}
+	}
+	if (space === totalSize) {
+		return;
+	}
+	if (space <= totalMin) {
+		for (var i = 0; i < count; ++i) {
+			var sizer = sizers[i];
+			sizer.size = sizer.minSize;
+		}
+		return;
+	}
+	if (space >= totalMax) {
+		for (var i = 0; i < count; ++i) {
+			var sizer = sizers[i];
+			sizer.size = sizer.maxSize;
+		}
+		return;
+	}
+	var nearZero = 0.01;
+	var notDoneCount = count;
+	if (space < totalSize) {
+		var freeSpace = totalSize - space;
+		while (stretchCount > 0 && freeSpace > nearZero) {
+			var distSpace = freeSpace;
+			var distStretch = totalStretch;
+			for (var i = 0; i < count; ++i) {
+				var sizer = sizers[i];
+				if (sizer.done || sizer.stretch === 0) {
+					continue;
+				}
+				var amt = sizer.stretch * distSpace / distStretch;
+				if (sizer.size - amt <= sizer.minSize) {
+					freeSpace -= sizer.size - sizer.minSize;
+					totalStretch -= sizer.stretch;
+					sizer.size = sizer.minSize;
+					sizer.done = true;
+					notDoneCount--;
+					stretchCount--;
+				}
+				else {
+					freeSpace -= amt;
+					sizer.size -= amt;
+				}
+			}
+		}
+		while (notDoneCount > 0 && freeSpace > nearZero) {
+			var amt = freeSpace / notDoneCount;
+			for (var i = 0; i < count; ++i) {
+				var sizer = sizers[i];
+				if (sizer.done) {
+					continue;
+				}
+				if (sizer.size - amt <= sizer.minSize) {
+					freeSpace -= sizer.size - sizer.minSize;
+					sizer.size = sizer.minSize;
+					sizer.done = true;
+					notDoneCount--;
+				}
+				else {
+					freeSpace -= amt;
+					sizer.size -= amt;
+				}
+			}
+		}
+	}
+	else {
+		var freeSpace = space - totalSize;
+		while (stretchCount > 0 && freeSpace > nearZero) {
+			var distSpace = freeSpace;
+			var distStretch = totalStretch;
+			for (var i = 0; i < count; ++i) {
+				var sizer = sizers[i];
+				if (sizer.done || sizer.stretch === 0) {
+					continue;
+				}
+				var amt = sizer.stretch * distSpace / distStretch;
+				if (sizer.size + amt >= sizer.maxSize) {
+					freeSpace -= sizer.maxSize - sizer.size;
+					totalStretch -= sizer.stretch;
+					sizer.size = sizer.maxSize;
+					sizer.done = true;
+					notDoneCount--;
+					stretchCount--;
+				}
+				else {
+					freeSpace -= amt;
+					sizer.size += amt;
+				}
+			}
+		}
+		while (notDoneCount > 0 && freeSpace > nearZero) {
+			var amt = freeSpace / notDoneCount;
+			for (var i = 0; i < count; ++i) {
+				var sizer = sizers[i];
+				if (sizer.done) {
+					continue;
+				}
+				if (sizer.size + amt >= sizer.maxSize) {
+					freeSpace -= sizer.maxSize - sizer.size;
+					sizer.size = sizer.maxSize;
+					sizer.done = true;
+					notDoneCount--;
+				}
+				else {
+					freeSpace -= amt;
+					sizer.size += amt;
+				}
+			}
+		}
+	}
+}
+exports.boxCalc = boxCalc;
+
+function initSizer(sizer) {
+	sizer.size = Math.max(sizer.minSize, Math.min(sizer.sizeHint, sizer.maxSize));
+	sizer.done = false;
+}
+},{}],4:[function(require,module,exports){
 var css = ".p-BoxPanel{position:relative}.p-BoxPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-boxpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],4:[function(require,module,exports){
+},{"browserify-css":2}],5:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -392,7 +558,7 @@ function onChildPropertyChanged(child) {
 		phosphor_messaging_1.postMessage(child.parent, phosphor_widget_1.MSG_LAYOUT_REQUEST);
 	}
 }
-},{"./index.css":3,"phosphor-arrays":5,"phosphor-boxengine":6,"phosphor-messaging":36,"phosphor-properties":7,"phosphor-widget":66}],5:[function(require,module,exports){
+},{"./index.css":4,"phosphor-arrays":6,"phosphor-boxengine":7,"phosphor-messaging":40,"phosphor-properties":8,"phosphor-widget":72}],6:[function(require,module,exports){
 
 'use strict';
 
@@ -653,167 +819,9 @@ function upperBound(array, value, cmp) {
 	return begin;
 }
 exports.upperBound = upperBound;
-},{}],6:[function(require,module,exports){
-
-'use strict';
-
-var BoxSizer = (function () {
-	function BoxSizer() {
-
-		this.sizeHint = 0;
-
-		this.minSize = 0;
-
-		this.maxSize = Infinity;
-
-		this.stretch = 1;
-
-		this.size = 0;
-
-		this.done = false;
-	}
-	return BoxSizer;
-})();
-exports.BoxSizer = BoxSizer;
-
-function boxCalc(sizers, space) {
-	var count = sizers.length;
-	if (count === 0) {
-		return;
-	}
-	var totalMin = 0;
-	var totalMax = 0;
-	var totalSize = 0;
-	var totalStretch = 0;
-	var stretchCount = 0;
-	for (var i = 0; i < count; ++i) {
-		var sizer = sizers[i];
-		initSizer(sizer);
-		totalSize += sizer.size;
-		totalMin += sizer.minSize;
-		totalMax += sizer.maxSize;
-		if (sizer.stretch > 0) {
-			totalStretch += sizer.stretch;
-			stretchCount++;
-		}
-	}
-	if (space === totalSize) {
-		return;
-	}
-	if (space <= totalMin) {
-		for (var i = 0; i < count; ++i) {
-			var sizer = sizers[i];
-			sizer.size = sizer.minSize;
-		}
-		return;
-	}
-	if (space >= totalMax) {
-		for (var i = 0; i < count; ++i) {
-			var sizer = sizers[i];
-			sizer.size = sizer.maxSize;
-		}
-		return;
-	}
-	var nearZero = 0.01;
-	var notDoneCount = count;
-	if (space < totalSize) {
-		var freeSpace = totalSize - space;
-		while (stretchCount > 0 && freeSpace > nearZero) {
-			var distSpace = freeSpace;
-			var distStretch = totalStretch;
-			for (var i = 0; i < count; ++i) {
-				var sizer = sizers[i];
-				if (sizer.done || sizer.stretch === 0) {
-					continue;
-				}
-				var amt = sizer.stretch * distSpace / distStretch;
-				if (sizer.size - amt <= sizer.minSize) {
-					freeSpace -= sizer.size - sizer.minSize;
-					totalStretch -= sizer.stretch;
-					sizer.size = sizer.minSize;
-					sizer.done = true;
-					notDoneCount--;
-					stretchCount--;
-				}
-				else {
-					freeSpace -= amt;
-					sizer.size -= amt;
-				}
-			}
-		}
-		while (notDoneCount > 0 && freeSpace > nearZero) {
-			var amt = freeSpace / notDoneCount;
-			for (var i = 0; i < count; ++i) {
-				var sizer = sizers[i];
-				if (sizer.done) {
-					continue;
-				}
-				if (sizer.size - amt <= sizer.minSize) {
-					freeSpace -= sizer.size - sizer.minSize;
-					sizer.size = sizer.minSize;
-					sizer.done = true;
-					notDoneCount--;
-				}
-				else {
-					freeSpace -= amt;
-					sizer.size -= amt;
-				}
-			}
-		}
-	}
-	else {
-		var freeSpace = space - totalSize;
-		while (stretchCount > 0 && freeSpace > nearZero) {
-			var distSpace = freeSpace;
-			var distStretch = totalStretch;
-			for (var i = 0; i < count; ++i) {
-				var sizer = sizers[i];
-				if (sizer.done || sizer.stretch === 0) {
-					continue;
-				}
-				var amt = sizer.stretch * distSpace / distStretch;
-				if (sizer.size + amt >= sizer.maxSize) {
-					freeSpace -= sizer.maxSize - sizer.size;
-					totalStretch -= sizer.stretch;
-					sizer.size = sizer.maxSize;
-					sizer.done = true;
-					notDoneCount--;
-					stretchCount--;
-				}
-				else {
-					freeSpace -= amt;
-					sizer.size += amt;
-				}
-			}
-		}
-		while (notDoneCount > 0 && freeSpace > nearZero) {
-			var amt = freeSpace / notDoneCount;
-			for (var i = 0; i < count; ++i) {
-				var sizer = sizers[i];
-				if (sizer.done) {
-					continue;
-				}
-				if (sizer.size + amt >= sizer.maxSize) {
-					freeSpace -= sizer.maxSize - sizer.size;
-					sizer.size = sizer.maxSize;
-					sizer.done = true;
-					notDoneCount--;
-				}
-				else {
-					freeSpace -= amt;
-					sizer.size += amt;
-				}
-			}
-		}
-	}
-}
-exports.boxCalc = boxCalc;
-
-function initSizer(sizer) {
-	sizer.size = Math.max(sizer.minSize, Math.min(sizer.sizeHint, sizer.maxSize));
-	sizer.done = false;
-}
 },{}],7:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],8:[function(require,module,exports){
 
 'use strict';
 var phosphor_signaling_1 = require('phosphor-signaling');
@@ -922,7 +930,7 @@ function lookupHash(owner) {
 	ownerData.set(owner, hash);
 	return hash;
 }
-},{"phosphor-signaling":8}],8:[function(require,module,exports){
+},{"phosphor-signaling":9}],9:[function(require,module,exports){
 
 'use strict';
 
@@ -1179,9 +1187,84 @@ function removeFromSendersList(conn) {
 	conn.prevSender = null;
 	conn.nextSender = null;
 }
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+
+'use strict';
+
+var DisposableDelegate = (function () {
+
+	function DisposableDelegate(callback) {
+		this._callback = callback;
+	}
+	Object.defineProperty(DisposableDelegate.prototype, "isDisposed", {
+
+		get: function () {
+			return !this._callback;
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	DisposableDelegate.prototype.dispose = function () {
+		var callback = this._callback;
+		this._callback = null;
+		if (callback)
+			callback();
+	};
+	return DisposableDelegate;
+})();
+exports.DisposableDelegate = DisposableDelegate;
+
+var DisposableSet = (function () {
+
+	function DisposableSet(items) {
+		var _this = this;
+		this._set = new Set();
+		if (items)
+			items.forEach(function (item) { return _this._set.add(item); });
+	}
+	Object.defineProperty(DisposableSet.prototype, "isDisposed", {
+
+		get: function () {
+			return !this._set;
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	DisposableSet.prototype.dispose = function () {
+		var set = this._set;
+		this._set = null;
+		if (set)
+			set.forEach(function (item) { return item.dispose(); });
+	};
+
+	DisposableSet.prototype.add = function (item) {
+		if (!this._set) {
+			throw new Error('object is disposed');
+		}
+		this._set.add(item);
+	};
+
+	DisposableSet.prototype.remove = function (item) {
+		if (!this._set) {
+			throw new Error('object is disposed');
+		}
+		this._set.delete(item);
+	};
+
+	DisposableSet.prototype.clear = function () {
+		if (!this._set) {
+			throw new Error('object is disposed');
+		}
+		this._set.clear();
+	};
+	return DisposableSet;
+})();
+exports.DisposableSet = DisposableSet;
+},{}],11:[function(require,module,exports){
 var css = ".p-DockTabPanel-overlay{box-sizing:border-box;position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;transition:all 150ms ease}.p-Tab.p-mod-docking{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-dockpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],10:[function(require,module,exports){
+},{"browserify-css":2}],12:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -1889,86 +1972,13 @@ var DockSplitPanel = (function (_super) {
 	}
 	return DockSplitPanel;
 })(phosphor_splitpanel_1.SplitPanel);
-},{"./index.css":9,"phosphor-arrays":11,"phosphor-boxpanel":4,"phosphor-domutil":14,"phosphor-properties":15,"phosphor-splitpanel":40,"phosphor-stackedpanel":18,"phosphor-tabs":53}],11:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],12:[function(require,module,exports){
-
-'use strict';
-
-var DisposableDelegate = (function () {
-
-	function DisposableDelegate(callback) {
-		this._callback = callback;
-	}
-	Object.defineProperty(DisposableDelegate.prototype, "isDisposed", {
-
-		get: function () {
-			return !this._callback;
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	DisposableDelegate.prototype.dispose = function () {
-		var callback = this._callback;
-		this._callback = null;
-		if (callback)
-			callback();
-	};
-	return DisposableDelegate;
-})();
-exports.DisposableDelegate = DisposableDelegate;
-
-var DisposableSet = (function () {
-
-	function DisposableSet(items) {
-		var _this = this;
-		this._set = new Set();
-		if (items)
-			items.forEach(function (item) { return _this._set.add(item); });
-	}
-	Object.defineProperty(DisposableSet.prototype, "isDisposed", {
-
-		get: function () {
-			return !this._set;
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	DisposableSet.prototype.dispose = function () {
-		var set = this._set;
-		this._set = null;
-		if (set)
-			set.forEach(function (item) { return item.dispose(); });
-	};
-
-	DisposableSet.prototype.add = function (item) {
-		if (!this._set) {
-			throw new Error('object is disposed');
-		}
-		this._set.add(item);
-	};
-
-	DisposableSet.prototype.remove = function (item) {
-		if (!this._set) {
-			throw new Error('object is disposed');
-		}
-		this._set.delete(item);
-	};
-
-	DisposableSet.prototype.clear = function () {
-		if (!this._set) {
-			throw new Error('object is disposed');
-		}
-		this._set.clear();
-	};
-	return DisposableSet;
-})();
-exports.DisposableSet = DisposableSet;
-},{}],13:[function(require,module,exports){
+},{"./index.css":11,"phosphor-arrays":13,"phosphor-boxpanel":5,"phosphor-domutil":16,"phosphor-properties":17,"phosphor-splitpanel":46,"phosphor-stackedpanel":20,"phosphor-tabs":59}],13:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],14:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],15:[function(require,module,exports){
 var css = "body.p-mod-override-cursor *{cursor:inherit!important}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-dockpanel/node_modules/phosphor-domutil/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],14:[function(require,module,exports){
+},{"browserify-css":2}],16:[function(require,module,exports){
 
 'use strict';
 var phosphor_disposable_1 = require('phosphor-disposable');
@@ -2038,13 +2048,13 @@ function sizeLimits(node) {
 	};
 }
 exports.sizeLimits = sizeLimits;
-},{"./index.css":13,"phosphor-disposable":12}],15:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":16}],16:[function(require,module,exports){
+},{"./index.css":15,"phosphor-disposable":14}],17:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],17:[function(require,module,exports){
+},{"dup":8,"phosphor-signaling":18}],18:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],19:[function(require,module,exports){
 var css = ".p-StackedPanel{position:relative}.p-StackedPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-dockpanel/node_modules/phosphor-stackedpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],18:[function(require,module,exports){
+},{"browserify-css":2}],20:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -2206,9 +2216,13 @@ var StackedPanel = (function (_super) {
 	return StackedPanel;
 })(phosphor_widget_1.Widget);
 exports.StackedPanel = StackedPanel;
-},{"./index.css":17,"phosphor-messaging":36,"phosphor-properties":15,"phosphor-signaling":16,"phosphor-widget":66}],19:[function(require,module,exports){
+},{"./index.css":19,"phosphor-messaging":40,"phosphor-properties":17,"phosphor-signaling":18,"phosphor-widget":72}],21:[function(require,module,exports){
+var css = "body.p-mod-override-cursor *{cursor:inherit!important}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-domutil/lib/index.css"})); module.exports = css;
+},{"browserify-css":2}],22:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./index.css":21,"dup":16,"phosphor-disposable":10}],23:[function(require,module,exports){
 var css = ".p-GridPanel{position:relative}.p-GridPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-gridpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],20:[function(require,module,exports){
+},{"browserify-css":2}],24:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -2640,15 +2654,15 @@ function makeSizer(spec) {
 	sizer.maxSize = Math.max(sizer.minSize, sizer.maxSize);
 	return sizer;
 }
-},{"./index.css":19,"phosphor-boxengine":21,"phosphor-messaging":36,"phosphor-properties":22,"phosphor-widget":66}],21:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],22:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":23}],23:[function(require,module,exports){
+},{"./index.css":23,"phosphor-boxengine":25,"phosphor-messaging":40,"phosphor-properties":26,"phosphor-widget":72}],25:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],26:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],24:[function(require,module,exports){
+},{"dup":8,"phosphor-signaling":27}],27:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],28:[function(require,module,exports){
 var css = ".p-Menu{position:absolute;top:0;left:0;margin:0;padding:3px 0;white-space:nowrap;overflow-x:hidden;overflow-y:auto;z-index:100000}.p-Menu-content{display:table;width:100%;margin:0;padding:0;border-spacing:0}.p-Menu-item{display:table-row}.p-Menu-item.p-mod-force-hidden,.p-Menu-item.p-mod-hidden{display:none}.p-Menu-item>span{display:table-cell;padding-top:4px;padding-bottom:4px}.p-Menu-item-icon{width:21px;padding-left:2px;padding-right:2px;text-align:center}.p-Menu-item-text{padding-left:2px;padding-right:35px}.p-Menu-item-shortcut{text-align:right}.p-Menu-item-submenu-icon{width:16px;text-align:center}.p-Menu-item.p-mod-separator-type>span{padding:0;height:9px;line-height:0;text-indent:100%;overflow:hidden;whitespace:nowrap;vertical-align:top}.p-Menu-item.p-mod-separator-type>span::after{content:'';display:block;position:relative;top:4px}.p-MenuBar-content{display:flex;flex-direction:row}.p-MenuBar-item{box-sizing:border-box}.p-MenuBar-item.p-mod-force-hidden,.p-MenuBar-item.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-menus/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],25:[function(require,module,exports){
+},{"browserify-css":2}],29:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -2659,7 +2673,7 @@ __export(require('./menubar'));
 __export(require('./menubase'));
 __export(require('./menuitem'));
 require('./index.css');
-},{"./index.css":24,"./menu":26,"./menubar":27,"./menubase":28,"./menuitem":29}],26:[function(require,module,exports){
+},{"./index.css":28,"./menu":30,"./menubar":31,"./menubase":32,"./menuitem":33}],30:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -3248,7 +3262,7 @@ function openSubmenu(menu, item) {
 	}
 	showMenu(menu, x, y);
 }
-},{"./menubase":28,"./menuitem":29,"phosphor-domutil":32,"phosphor-signaling":35,"phosphor-widget":66}],27:[function(require,module,exports){
+},{"./menubase":32,"./menuitem":33,"phosphor-domutil":36,"phosphor-signaling":39,"phosphor-widget":72}],31:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -3672,7 +3686,7 @@ function hitTestMenus(menu, x, y) {
 	}
 	return false;
 }
-},{"./menubase":28,"./menuitem":29,"phosphor-domutil":32,"phosphor-properties":34}],28:[function(require,module,exports){
+},{"./menubase":32,"./menuitem":33,"phosphor-domutil":36,"phosphor-properties":38}],32:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -3793,7 +3807,7 @@ exports.MenuBase = MenuBase;
 function isSelectable(item) {
 	return !item.hidden && !item.disabled && !item.isSeparatorType;
 }
-},{"phosphor-arrays":30,"phosphor-properties":34,"phosphor-widget":66}],29:[function(require,module,exports){
+},{"phosphor-arrays":34,"phosphor-properties":38,"phosphor-widget":72}],33:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
@@ -4036,19 +4050,19 @@ function coerceMenuItemType(item, value) {
 	console.warn('invalid menu item type:', value);
 	return 'normal';
 }
-},{"./menu":26,"phosphor-properties":34}],30:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],31:[function(require,module,exports){
+},{"./menu":30,"phosphor-properties":38}],34:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],35:[function(require,module,exports){
 var css = "body.p-mod-override-cursor *{cursor:inherit!important}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-menus/node_modules/phosphor-domutil/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],32:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"./index.css":31,"dup":14,"phosphor-disposable":33}],33:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],34:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":35}],35:[function(require,module,exports){
+},{"browserify-css":2}],36:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./index.css":35,"dup":16,"phosphor-disposable":37}],37:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],38:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],36:[function(require,module,exports){
+},{"dup":8,"phosphor-signaling":39}],39:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],40:[function(require,module,exports){
 
 'use strict';
 var phosphor_queue_1 = require('phosphor-queue');
@@ -4258,7 +4272,7 @@ var MessageDispatcher = (function () {
 	};
 	return MessageDispatcher;
 })();
-},{"phosphor-queue":37}],37:[function(require,module,exports){
+},{"phosphor-queue":41}],41:[function(require,module,exports){
 
 'use strict';
 
@@ -4445,7 +4459,7 @@ var Queue = (function () {
 	return Queue;
 })();
 exports.Queue = Queue;
-},{}],38:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 
 'use strict';
 
@@ -4513,9 +4527,13 @@ var NodeWrapper = (function () {
 	return NodeWrapper;
 })();
 exports.NodeWrapper = NodeWrapper;
-},{}],39:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
+arguments[4][8][0].apply(exports,arguments)
+},{"dup":8,"phosphor-signaling":44}],44:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],45:[function(require,module,exports){
 var css = ".p-SplitPanel{position:relative}.p-SplitPanel>.p-Widget{position:absolute;z-index:0}.p-SplitHandle{box-sizing:border-box;position:absolute;z-index:1}.p-SplitHandle.p-mod-hidden{display:none}.p-SplitHandle.p-mod-horizontal{cursor:ew-resize}.p-SplitHandle.p-mod-vertical{cursor:ns-resize}.p-SplitHandle-overlay{box-sizing:border-box;position:absolute;top:0;left:0;width:100%;height:100%}.p-SplitHandle.p-mod-horizontal>.p-SplitHandle-overlay{min-width:7px;left:50%;transform:translateX(-50%)}.p-SplitHandle.p-mod-vertical>.p-SplitHandle-overlay{min-height:7px;top:50%;transform:translateY(-50%)}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-splitpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],40:[function(require,module,exports){
+},{"browserify-css":2}],46:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -5150,31 +5168,31 @@ function normalize(values) {
 	}
 	return result;
 }
-},{"./index.css":39,"phosphor-arrays":41,"phosphor-boxengine":42,"phosphor-domutil":45,"phosphor-messaging":36,"phosphor-nodewrapper":38,"phosphor-properties":46,"phosphor-widget":66}],41:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],42:[function(require,module,exports){
+},{"./index.css":45,"phosphor-arrays":47,"phosphor-boxengine":48,"phosphor-domutil":51,"phosphor-messaging":40,"phosphor-nodewrapper":42,"phosphor-properties":52,"phosphor-widget":72}],47:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],43:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],44:[function(require,module,exports){
+},{"dup":6}],48:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],49:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],50:[function(require,module,exports){
 var css = "body.p-mod-override-cursor *{cursor:inherit!important}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-splitpanel/node_modules/phosphor-domutil/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],45:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"./index.css":44,"dup":14,"phosphor-disposable":43}],46:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":47}],47:[function(require,module,exports){
+},{"browserify-css":2}],51:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./index.css":50,"dup":16,"phosphor-disposable":49}],52:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],48:[function(require,module,exports){
+},{"dup":8,"phosphor-signaling":53}],53:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],54:[function(require,module,exports){
 var css = ".p-StackedPanel{position:relative}.p-StackedPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-stackedpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],49:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"./index.css":48,"dup":18,"phosphor-messaging":36,"phosphor-properties":50,"phosphor-signaling":51,"phosphor-widget":66}],50:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":51}],51:[function(require,module,exports){
+},{"browserify-css":2}],55:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"./index.css":54,"dup":20,"phosphor-messaging":40,"phosphor-properties":56,"phosphor-signaling":57,"phosphor-widget":72}],56:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],52:[function(require,module,exports){
+},{"dup":8,"phosphor-signaling":57}],57:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],58:[function(require,module,exports){
 var css = ".p-TabBar{position:relative}.p-TabBar-header{display:none;position:absolute;top:0;left:0;right:0;z-index:0}.p-TabBar-content{position:absolute;top:0;left:0;right:0;bottom:0;z-index:2;display:flex;flex-direction:row}.p-TabBar-footer{display:none;position:absolute;left:0;right:0;bottom:0;z-index:1}.p-Tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-Tab-close-icon,.p-Tab-icon{flex:0 0 auto}.p-Tab-text{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging>.p-TabBar-content>.p-Tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging>.p-TabBar-content>.p-Tab.p-mod-active{transition:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-tabs/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],53:[function(require,module,exports){
+},{"browserify-css":2}],59:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -5184,7 +5202,7 @@ __export(require('./tab'));
 __export(require('./tabbar'));
 __export(require('./tabpanel'));
 require('./index.css');
-},{"./index.css":52,"./tab":54,"./tabbar":55,"./tabpanel":56}],54:[function(require,module,exports){
+},{"./index.css":58,"./tab":60,"./tabbar":61,"./tabpanel":62}],60:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -5276,7 +5294,7 @@ var Tab = (function (_super) {
 	return Tab;
 })(phosphor_nodewrapper_1.NodeWrapper);
 exports.Tab = Tab;
-},{"phosphor-nodewrapper":38}],55:[function(require,module,exports){
+},{"phosphor-nodewrapper":42}],61:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -5886,7 +5904,7 @@ function snapTabLayout(tabs) {
 	}
 	return layout;
 }
-},{"phosphor-arrays":57,"phosphor-domutil":60,"phosphor-properties":61,"phosphor-signaling":62,"phosphor-widget":66}],56:[function(require,module,exports){
+},{"phosphor-arrays":63,"phosphor-domutil":66,"phosphor-properties":67,"phosphor-signaling":68,"phosphor-widget":72}],62:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6059,25 +6077,25 @@ var TabPanel = (function (_super) {
 	return TabPanel;
 })(phosphor_boxpanel_1.BoxPanel);
 exports.TabPanel = TabPanel;
-},{"./tabbar":55,"phosphor-boxpanel":4,"phosphor-properties":61,"phosphor-signaling":62,"phosphor-stackedpanel":64}],57:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],58:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],59:[function(require,module,exports){
+},{"./tabbar":61,"phosphor-boxpanel":5,"phosphor-properties":67,"phosphor-signaling":68,"phosphor-stackedpanel":70}],63:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],64:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],65:[function(require,module,exports){
 var css = "body.p-mod-override-cursor *{cursor:inherit!important}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-tabs/node_modules/phosphor-domutil/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],60:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"./index.css":59,"dup":14,"phosphor-disposable":58}],61:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":62}],62:[function(require,module,exports){
-arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],63:[function(require,module,exports){
-var css = ".p-StackedPanel{position:relative}.p-StackedPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-tabs/node_modules/phosphor-stackedpanel/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],64:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"./index.css":63,"dup":18,"phosphor-messaging":36,"phosphor-properties":61,"phosphor-signaling":62,"phosphor-widget":66}],65:[function(require,module,exports){
-var css = ".p-Widget{box-sizing:border-box;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;overflow:hidden;cursor:default}.p-Widget.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-widget/lib/index.css"})); module.exports = css;
 },{"browserify-css":2}],66:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./index.css":65,"dup":16,"phosphor-disposable":64}],67:[function(require,module,exports){
+arguments[4][8][0].apply(exports,arguments)
+},{"dup":8,"phosphor-signaling":68}],68:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],69:[function(require,module,exports){
+var css = ".p-StackedPanel{position:relative}.p-StackedPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-tabs/node_modules/phosphor-stackedpanel/lib/index.css"})); module.exports = css;
+},{"browserify-css":2}],70:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"./index.css":69,"dup":20,"phosphor-messaging":40,"phosphor-properties":67,"phosphor-signaling":68,"phosphor-widget":72}],71:[function(require,module,exports){
+var css = ".p-Widget{box-sizing:border-box;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;overflow:hidden;cursor:default}.p-Widget.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-widget/lib/index.css"})); module.exports = css;
+},{"browserify-css":2}],72:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6703,18 +6721,18 @@ function sendToShown(array, msg) {
 			phosphor_messaging_1.sendMessage(array[i], msg);
 	}
 }
-},{"./index.css":65,"phosphor-arrays":67,"phosphor-domutil":70,"phosphor-messaging":36,"phosphor-nodewrapper":71,"phosphor-properties":72,"phosphor-signaling":73}],67:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],68:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],69:[function(require,module,exports){
+},{"./index.css":71,"phosphor-arrays":73,"phosphor-domutil":76,"phosphor-messaging":40,"phosphor-nodewrapper":77,"phosphor-properties":78,"phosphor-signaling":79}],73:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],74:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],75:[function(require,module,exports){
 var css = "body.p-mod-override-cursor *{cursor:inherit!important}"; (require("browserify-css").createStyle(css, { "href": "node_modules/phosphor-widget/node_modules/phosphor-domutil/lib/index.css"})); module.exports = css;
-},{"browserify-css":2}],70:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"./index.css":69,"dup":14,"phosphor-disposable":68}],71:[function(require,module,exports){
-arguments[4][38][0].apply(exports,arguments)
-},{"dup":38}],72:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"dup":7,"phosphor-signaling":73}],73:[function(require,module,exports){
+},{"browserify-css":2}],76:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"./index.css":75,"dup":16,"phosphor-disposable":74}],77:[function(require,module,exports){
+arguments[4][42][0].apply(exports,arguments)
+},{"dup":42}],78:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}]},{},[1]);
+},{"dup":8,"phosphor-signaling":79}],79:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}]},{},[1]);
