@@ -1,5 +1,12 @@
+"""
+This script defines a selection of phosphorjs modules, and uses npm to
+install and bundle them in one standalone js file. Needs npm with
+browserify and uglify.
+"""
+
 import subprocess
 import json
+import sys
 import os
 
 from flexx.util.minify import minify
@@ -38,13 +45,19 @@ window.phosphor.createWidget = function (name) {
 };
 """
 
+def check_call(cmd, **kwargs):
+    kwargs['cwd'] = THIS_DIR
+    if sys.platform.startswith('win'):
+        kwargs['shell'] = True
+    return subprocess.check_call(cmd, **kwargs)
+
 # Write package.json
 deps_dict = dict([('phosphor-' + m, 'latest') for m in modules])
 package = package.replace('DEPS', json.dumps(deps_dict, indent=4))
 open('package.json', 'wt').write(package)
 
 # Install
-subprocess.check_call(['npm', 'install'], cwd=THIS_DIR)
+check_call(['npm', 'install'])
 
 # Create index.js
 code = ''
@@ -57,9 +70,10 @@ code += CODE
 open('index.js', 'wt').write(code)
 
 # Create bundle
-subprocess.check_call(['npm', 'install', 'browserify', 'browserify-css', 'uglify'], cwd=THIS_DIR)
-subprocess.check_call(['browserify', '-g', '[', 'browserify-css', '--minify=true', ']', 'index.js', '-o', 'phosphor-all.js'], cwd=THIS_DIR)
-subprocess.check_call(['uglify', '-s', 'phosphor.js', '-o', 'phosphor-all.min.js'], cwd=THIS_DIR)
+check_call(['npm', 'install', 'browserify', 'browserify-css', 'uglify'])
+check_call(['browserify', '-g', '[', 'browserify-css', '--minify=true', ']', 'index.js', '-o', 'phosphor-all.js'])
+# check_call(['uglify', '-s', 'phosphor-all.js', '-o', 'phosphor-all.min.js'])
+# todo: uglify is broken on windows?
 
 # Strip comments in non-minified
 text = open('phosphor-all.js', 'rt').read()
