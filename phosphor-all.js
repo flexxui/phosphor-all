@@ -18,7 +18,9 @@ window.phosphor.dockpanel = require("phosphor-dockpanel");
 
 window.phosphor.createWidget = function (name) {
 	var ori = phosphor.widget.Widget.createNode;
-	phosphor.widget.Widget.createNode = function() {return document.createElement(name);};
+	phosphor.widget.Widget.createNode = function() {
+		return document.createElement(name);
+	};
 	var w = new phosphor.widget.Widget();
 	phosphor.widget.Widget.createNode = ori;
 	return w;
@@ -284,6 +286,7 @@ var phosphor_properties_1 = require('phosphor-properties');
 var phosphor_widget_1 = require('phosphor-widget');
 require('./index.css');
 
+
 var BOX_PANEL_CLASS = 'p-BoxPanel';
 
 var LEFT_TO_RIGHT_CLASS = 'p-mod-left-to-right';
@@ -311,41 +314,20 @@ var BoxPanel = (function (_super) {
 
 	function BoxPanel() {
 		_super.call(this);
-		this._fixedSpace = 0;
-		this._box = null;
-		this._sizers = [];
 		this.addClass(BOX_PANEL_CLASS);
-		this.addClass(TOP_TO_BOTTOM_CLASS);
 	}
 
-	BoxPanel.getStretch = function (widget) {
-		return BoxPanel.stretchProperty.get(widget);
-	};
-
-	BoxPanel.setStretch = function (widget, value) {
-		BoxPanel.stretchProperty.set(widget, value);
-	};
-
-	BoxPanel.getSizeBasis = function (widget) {
-		return BoxPanel.sizeBasisProperty.get(widget);
-	};
-
-	BoxPanel.setSizeBasis = function (widget, value) {
-		BoxPanel.sizeBasisProperty.set(widget, value);
-	};
-
-	BoxPanel.prototype.dispose = function () {
-		this._sizers.length = 0;
-		_super.prototype.dispose.call(this);
+	BoxPanel.createLayout = function () {
+		return new BoxLayout();
 	};
 	Object.defineProperty(BoxPanel.prototype, "direction", {
 
 		get: function () {
-			return BoxPanel.directionProperty.get(this);
+			return this.layout.direction;
 		},
 
 		set: function (value) {
-			BoxPanel.directionProperty.set(this, value);
+			this.layout.direction = value;
 		},
 		enumerable: true,
 		configurable: true
@@ -353,228 +335,21 @@ var BoxPanel = (function (_super) {
 	Object.defineProperty(BoxPanel.prototype, "spacing", {
 
 		get: function () {
-			return BoxPanel.spacingProperty.get(this);
+			return this.layout.spacing;
 		},
 
 		set: function (value) {
-			BoxPanel.spacingProperty.set(this, value);
+			this.layout.spacing = value;
 		},
 		enumerable: true,
 		configurable: true
 	});
+	return BoxPanel;
+})(phosphor_widget_1.Panel);
+exports.BoxPanel = BoxPanel;
 
-	BoxPanel.prototype.onChildAdded = function (msg) {
-		arrays.insert(this._sizers, msg.currentIndex, new phosphor_boxengine_1.BoxSizer());
-		this.node.appendChild(msg.child.node);
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgAfterAttach);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	BoxPanel.prototype.onChildMoved = function (msg) {
-		arrays.move(this._sizers, msg.previousIndex, msg.currentIndex);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	BoxPanel.prototype.onChildRemoved = function (msg) {
-		arrays.removeAt(this._sizers, msg.previousIndex);
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgBeforeDetach);
-		this.node.removeChild(msg.child.node);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-		resetGeometry(msg.child);
-	};
-
-	BoxPanel.prototype.onAfterShow = function (msg) {
-		_super.prototype.onAfterShow.call(this, msg);
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	BoxPanel.prototype.onAfterAttach = function (msg) {
-		_super.prototype.onAfterAttach.call(this, msg);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	BoxPanel.prototype.onChildShown = function (msg) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	BoxPanel.prototype.onChildHidden = function (msg) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	BoxPanel.prototype.onResize = function (msg) {
-		if (this.isVisible) {
-			var width = msg.width < 0 ? this.node.offsetWidth : msg.width;
-			var height = msg.height < 0 ? this.node.offsetHeight : msg.height;
-			this._layoutChildren(width, height);
-		}
-	};
-
-	BoxPanel.prototype.onUpdateRequest = function (msg) {
-		if (this.isVisible) {
-			this._layoutChildren(this.node.offsetWidth, this.node.offsetHeight);
-		}
-	};
-
-	BoxPanel.prototype.onLayoutRequest = function (msg) {
-		if (this.isAttached) {
-			this._setupGeometry();
-		}
-	};
-
-	BoxPanel.prototype._setupGeometry = function () {
-
-		var visibleCount = 0;
-		for (var i = 0, n = this.childCount(); i < n; ++i) {
-			if (!this.childAt(i).hidden)
-				visibleCount++;
-		}
-
-		this._fixedSpace = this.spacing * Math.max(0, visibleCount - 1);
-
-		var minW = 0;
-		var minH = 0;
-		var maxW = Infinity;
-		var maxH = Infinity;
-		var dir = this.direction;
-		if (dir === Direction.LeftToRight || dir === Direction.RightToLeft) {
-			minW = this._fixedSpace;
-			maxW = visibleCount > 0 ? minW : maxW;
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				var sizer = this._sizers[i];
-				if (widget.hidden) {
-					sizer.minSize = 0;
-					sizer.maxSize = 0;
-					continue;
-				}
-				var limits = phosphor_domutil_1.sizeLimits(widget.node);
-				sizer.sizeHint = BoxPanel.getSizeBasis(widget);
-				sizer.stretch = BoxPanel.getStretch(widget);
-				sizer.minSize = limits.minWidth;
-				sizer.maxSize = limits.maxWidth;
-				minW += limits.minWidth;
-				maxW += limits.maxWidth;
-				minH = Math.max(minH, limits.minHeight);
-				maxH = Math.min(maxH, limits.maxHeight);
-			}
-		}
-		else {
-			minH = this._fixedSpace;
-			maxH = visibleCount > 0 ? minH : maxH;
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				var sizer = this._sizers[i];
-				if (widget.hidden) {
-					sizer.minSize = 0;
-					sizer.maxSize = 0;
-					continue;
-				}
-				var limits = phosphor_domutil_1.sizeLimits(widget.node);
-				sizer.sizeHint = BoxPanel.getSizeBasis(widget);
-				sizer.stretch = BoxPanel.getStretch(widget);
-				sizer.minSize = limits.minHeight;
-				sizer.maxSize = limits.maxHeight;
-				minH += limits.minHeight;
-				maxH += limits.maxHeight;
-				minW = Math.max(minW, limits.minWidth);
-				maxW = Math.min(maxW, limits.maxWidth);
-			}
-		}
-
-		this._box = phosphor_domutil_1.boxSizing(this.node);
-		minW += this._box.horizontalSum;
-		minH += this._box.verticalSum;
-		maxW += this._box.horizontalSum;
-		maxH += this._box.verticalSum;
-
-		var style = this.node.style;
-		style.minWidth = minW + 'px';
-		style.minHeight = minH + 'px';
-		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
-		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
-
-		if (this.parent)
-			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Panel.MsgLayoutRequest);
-
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	BoxPanel.prototype._layoutChildren = function (offsetWidth, offsetHeight) {
-
-		if (this.childCount() === 0) {
-			return;
-		}
-
-		var box = this._box || (this._box = phosphor_domutil_1.boxSizing(this.node));
-
-		var top = box.paddingTop;
-		var left = box.paddingLeft;
-		var width = offsetWidth - box.horizontalSum;
-		var height = offsetHeight - box.verticalSum;
-
-		var dir = this.direction;
-		var spacing = this.spacing;
-		if (dir === Direction.LeftToRight) {
-			phosphor_boxengine_1.boxCalc(this._sizers, Math.max(0, width - this._fixedSpace));
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				if (widget.hidden) {
-					continue;
-				}
-				var size = this._sizers[i].size;
-				setGeometry(widget, left, top, size, height);
-				left += size + spacing;
-			}
-		}
-		else if (dir === Direction.TopToBottom) {
-			phosphor_boxengine_1.boxCalc(this._sizers, Math.max(0, height - this._fixedSpace));
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				if (widget.hidden) {
-					continue;
-				}
-				var size = this._sizers[i].size;
-				setGeometry(widget, left, top, width, size);
-				top += size + spacing;
-			}
-		}
-		else if (dir === Direction.RightToLeft) {
-			left += width;
-			phosphor_boxengine_1.boxCalc(this._sizers, Math.max(0, width - this._fixedSpace));
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				if (widget.hidden) {
-					continue;
-				}
-				var size = this._sizers[i].size;
-				setGeometry(widget, left - size, top, size, height);
-				left -= size + spacing;
-			}
-		}
-		else {
-			top += height;
-			phosphor_boxengine_1.boxCalc(this._sizers, Math.max(0, height - this._fixedSpace));
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				if (widget.hidden) {
-					continue;
-				}
-				var size = this._sizers[i].size;
-				setGeometry(widget, left, top - size, width, size);
-				top -= size + spacing;
-			}
-		}
-	};
-
-	BoxPanel.prototype._onDirectionChanged = function (old, value) {
-		this.toggleClass(LEFT_TO_RIGHT_CLASS, value === Direction.LeftToRight);
-		this.toggleClass(RIGHT_TO_LEFT_CLASS, value === Direction.RightToLeft);
-		this.toggleClass(TOP_TO_BOTTOM_CLASS, value === Direction.TopToBottom);
-		this.toggleClass(BOTTOM_TO_TOP_CLASS, value === Direction.BottomToTop);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
+var BoxPanel;
+(function (BoxPanel) {
 
 	BoxPanel.LeftToRight = Direction.LeftToRight;
 
@@ -584,94 +359,468 @@ var BoxPanel = (function (_super) {
 
 	BoxPanel.BottomToTop = Direction.BottomToTop;
 
-	BoxPanel.directionProperty = new phosphor_properties_1.Property({
-		name: 'direction',
-		value: Direction.TopToBottom,
-		changed: function (owner, old, value) { return owner._onDirectionChanged(old, value); },
+	function getStretch(widget) {
+		return BoxLayout.getStretch(widget);
+	}
+	BoxPanel.getStretch = getStretch;
+
+	function setStretch(widget, value) {
+		BoxLayout.setStretch(widget, value);
+	}
+	BoxPanel.setStretch = setStretch;
+
+	function getSizeBasis(widget) {
+		return BoxLayout.getSizeBasis(widget);
+	}
+	BoxPanel.getSizeBasis = getSizeBasis;
+
+	function setSizeBasis(widget, value) {
+		BoxLayout.setSizeBasis(widget, value);
+	}
+	BoxPanel.setSizeBasis = setSizeBasis;
+})(BoxPanel = exports.BoxPanel || (exports.BoxPanel = {}));
+
+var BoxLayout = (function (_super) {
+	__extends(BoxLayout, _super);
+	function BoxLayout() {
+		_super.apply(this, arguments);
+	}
+	Object.defineProperty(BoxLayout.prototype, "direction", {
+
+		get: function () {
+			return BoxLayoutPrivate.directionProperty.get(this);
+		},
+
+		set: function (value) {
+			BoxLayoutPrivate.directionProperty.set(this, value);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(BoxLayout.prototype, "spacing", {
+
+		get: function () {
+			return BoxLayoutPrivate.spacingProperty.get(this);
+		},
+
+		set: function (value) {
+			BoxLayoutPrivate.spacingProperty.set(this, value);
+		},
+		enumerable: true,
+		configurable: true
 	});
 
-	BoxPanel.spacingProperty = new phosphor_properties_1.Property({
+	BoxLayout.prototype.initialize = function () {
+		BoxLayoutPrivate.initialize(this);
+		_super.prototype.initialize.call(this);
+	};
+
+	BoxLayout.prototype.attachChild = function (index, child) {
+		var sizers = BoxLayoutPrivate.sizersProperty.get(this);
+		arrays.insert(sizers, index, new phosphor_boxengine_1.BoxSizer());
+		this.parent.node.appendChild(child.node);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
+		this.parent.fit();
+	};
+
+	BoxLayout.prototype.moveChild = function (fromIndex, toIndex, child) {
+		var sizers = BoxLayoutPrivate.sizersProperty.get(this);
+		arrays.move(sizers, fromIndex, toIndex);
+		this.parent.update();
+	};
+
+	BoxLayout.prototype.detachChild = function (index, child) {
+		var sizers = BoxLayoutPrivate.sizersProperty.get(this);
+		arrays.removeAt(sizers, index);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
+		this.parent.node.removeChild(child.node);
+		BoxLayoutPrivate.resetGeometry(child);
+		this.parent.fit();
+	};
+
+	BoxLayout.prototype.onAfterShow = function (msg) {
+		_super.prototype.onAfterShow.call(this, msg);
+		this.parent.update();
+	};
+
+	BoxLayout.prototype.onAfterAttach = function (msg) {
+		_super.prototype.onAfterAttach.call(this, msg);
+		this.parent.fit();
+	};
+
+	BoxLayout.prototype.onChildShown = function (msg) {
+
+
+		if (BoxLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			this.parent.fit();
+		}
+	};
+
+	BoxLayout.prototype.onChildHidden = function (msg) {
+
+
+		if (BoxLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			this.parent.fit();
+		}
+	};
+
+	BoxLayout.prototype.onResize = function (msg) {
+		if (this.parent.isVisible) {
+			BoxLayoutPrivate.update(this, msg.width, msg.height);
+		}
+	};
+
+	BoxLayout.prototype.onUpdateRequest = function (msg) {
+		if (this.parent.isVisible) {
+			BoxLayoutPrivate.update(this, -1, -1);
+		}
+	};
+
+	BoxLayout.prototype.onFitRequest = function (msg) {
+		if (this.parent.isAttached) {
+			BoxLayoutPrivate.fit(this);
+		}
+	};
+	return BoxLayout;
+})(phosphor_widget_1.PanelLayout);
+exports.BoxLayout = BoxLayout;
+
+var BoxLayout;
+(function (BoxLayout) {
+
+	BoxLayout.LeftToRight = Direction.LeftToRight;
+
+	BoxLayout.RightToLeft = Direction.RightToLeft;
+
+	BoxLayout.TopToBottom = Direction.TopToBottom;
+
+	BoxLayout.BottomToTop = Direction.BottomToTop;
+
+	function getStretch(widget) {
+		return BoxLayoutPrivate.stretchProperty.get(widget);
+	}
+	BoxLayout.getStretch = getStretch;
+
+	function setStretch(widget, value) {
+		BoxLayoutPrivate.stretchProperty.set(widget, value);
+	}
+	BoxLayout.setStretch = setStretch;
+
+	function getSizeBasis(widget) {
+		return BoxLayoutPrivate.sizeBasisProperty.get(widget);
+	}
+	BoxLayout.getSizeBasis = getSizeBasis;
+
+	function setSizeBasis(widget, value) {
+		BoxLayoutPrivate.sizeBasisProperty.set(widget, value);
+	}
+	BoxLayout.setSizeBasis = setSizeBasis;
+})(BoxLayout = exports.BoxLayout || (exports.BoxLayout = {}));
+
+var BoxLayoutPrivate;
+(function (BoxLayoutPrivate) {
+
+	BoxLayoutPrivate.IsIE = /Trident/.test(navigator.userAgent);
+
+	BoxLayoutPrivate.directionProperty = new phosphor_properties_1.Property({
+		name: 'direction',
+		value: Direction.TopToBottom,
+		changed: onDirectionChanged,
+	});
+
+	BoxLayoutPrivate.spacingProperty = new phosphor_properties_1.Property({
 		name: 'spacing',
 		value: 8,
 		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: function (owner) { return phosphor_messaging_1.postMessage(owner, phosphor_widget_1.Panel.MsgLayoutRequest); },
+		changed: onSpacingChanged,
 	});
 
-	BoxPanel.stretchProperty = new phosphor_properties_1.Property({
+	BoxLayoutPrivate.sizersProperty = new phosphor_properties_1.Property({
+		name: 'sizers',
+		create: function () { return []; },
+	});
+
+	BoxLayoutPrivate.stretchProperty = new phosphor_properties_1.Property({
 		name: 'stretch',
 		value: 0,
 		coerce: function (owner, value) { return Math.max(0, value | 0); },
 		changed: onChildPropertyChanged,
 	});
 
-	BoxPanel.sizeBasisProperty = new phosphor_properties_1.Property({
+	BoxLayoutPrivate.sizeBasisProperty = new phosphor_properties_1.Property({
 		name: 'sizeBasis',
 		value: 0,
 		coerce: function (owner, value) { return Math.max(0, value | 0); },
 		changed: onChildPropertyChanged,
 	});
-	return BoxPanel;
-})(phosphor_widget_1.Panel);
-exports.BoxPanel = BoxPanel;
 
-var rectProperty = new phosphor_properties_1.Property({
-	name: 'rect',
-	create: createRect,
-});
+	function initialize(layout) {
+		updateParentDirection(layout);
+	}
+	BoxLayoutPrivate.initialize = initialize;
 
-function createRect() {
-	return { top: NaN, left: NaN, width: NaN, height: NaN };
-}
+	function resetGeometry(widget) {
+		var rect = rectProperty.get(widget);
+		var style = widget.node.style;
+		rect.top = NaN;
+		rect.left = NaN;
+		rect.width = NaN;
+		rect.height = NaN;
+		style.top = '';
+		style.left = '';
+		style.width = '';
+		style.height = '';
+	}
+	BoxLayoutPrivate.resetGeometry = resetGeometry;
 
-function getRect(widget) {
-	return rectProperty.get(widget);
-}
+	function fit(layout) {
 
-function setGeometry(widget, left, top, width, height) {
-	var resized = false;
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	if (rect.top !== top) {
-		rect.top = top;
-		style.top = top + 'px';
-	}
-	if (rect.left !== left) {
-		rect.left = left;
-		style.left = left + 'px';
-	}
-	if (rect.width !== width) {
-		resized = true;
-		rect.width = width;
-		style.width = width + 'px';
-	}
-	if (rect.height !== height) {
-		resized = true;
-		rect.height = height;
-		style.height = height + 'px';
-	}
-	if (resized) {
-		phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
-	}
-}
+		var parent = layout.parent;
+		if (!parent) {
+			return;
+		}
 
-function resetGeometry(widget) {
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	rect.top = NaN;
-	rect.left = NaN;
-	rect.width = NaN;
-	rect.height = NaN;
-	style.top = '';
-	style.left = '';
-	style.width = '';
-	style.height = '';
-}
+		var visibleCount = 0;
+		for (var i = 0, n = layout.childCount(); i < n; ++i) {
+			if (!layout.childAt(i).isHidden)
+				visibleCount++;
+		}
 
-function onChildPropertyChanged(child) {
-	if (child.parent instanceof BoxPanel) {
-		phosphor_messaging_1.postMessage(child.parent, phosphor_widget_1.Panel.MsgLayoutRequest);
+		var fixedSpace = layout.spacing * Math.max(0, visibleCount - 1);
+		fixedSpaceProperty.set(layout, fixedSpace);
+
+		var minW = 0;
+		var minH = 0;
+		var maxW = Infinity;
+		var maxH = Infinity;
+		var dir = layout.direction;
+		var sizers = BoxLayoutPrivate.sizersProperty.get(layout);
+		if (dir === Direction.LeftToRight || dir === Direction.RightToLeft) {
+			minW = fixedSpace;
+			maxW = visibleCount > 0 ? minW : maxW;
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				var sizer = sizers[i];
+				if (widget.isHidden) {
+					sizer.minSize = 0;
+					sizer.maxSize = 0;
+					continue;
+				}
+				var limits = phosphor_domutil_1.sizeLimits(widget.node);
+				sizer.sizeHint = BoxLayoutPrivate.sizeBasisProperty.get(widget);
+				sizer.stretch = BoxLayoutPrivate.stretchProperty.get(widget);
+				sizer.minSize = limits.minWidth;
+				sizer.maxSize = limits.maxWidth;
+				minW += limits.minWidth;
+				maxW += limits.maxWidth;
+				minH = Math.max(minH, limits.minHeight);
+				maxH = Math.min(maxH, limits.maxHeight);
+			}
+		}
+		else {
+			minH = fixedSpace;
+			maxH = visibleCount > 0 ? minH : maxH;
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				var sizer = sizers[i];
+				if (widget.isHidden) {
+					sizer.minSize = 0;
+					sizer.maxSize = 0;
+					continue;
+				}
+				var limits = phosphor_domutil_1.sizeLimits(widget.node);
+				sizer.sizeHint = BoxLayoutPrivate.sizeBasisProperty.get(widget);
+				sizer.stretch = BoxLayoutPrivate.stretchProperty.get(widget);
+				sizer.minSize = limits.minHeight;
+				sizer.maxSize = limits.maxHeight;
+				minH += limits.minHeight;
+				maxH += limits.maxHeight;
+				minW = Math.max(minW, limits.minWidth);
+				maxW = Math.min(maxW, limits.maxWidth);
+			}
+		}
+
+		var box = phosphor_domutil_1.boxSizing(parent.node);
+		boxSizingProperty.set(parent, box);
+		minW += box.horizontalSum;
+		minH += box.verticalSum;
+		maxW += box.horizontalSum;
+		maxH += box.verticalSum;
+
+		var style = parent.node.style;
+		style.minWidth = minW + 'px';
+		style.minHeight = minH + 'px';
+		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
+		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
+
+		if (parent.parent)
+			phosphor_messaging_1.sendMessage(parent.parent, phosphor_widget_1.Widget.MsgFitRequest);
+
+		phosphor_messaging_1.sendMessage(parent, phosphor_widget_1.Widget.MsgUpdateRequest);
 	}
-}
+	BoxLayoutPrivate.fit = fit;
+
+	function update(layout, offsetWidth, offsetHeight) {
+
+		if (layout.childCount() === 0) {
+			return;
+		}
+
+		var parent = layout.parent;
+		if (!parent) {
+			return;
+		}
+
+		if (offsetWidth < 0) {
+			offsetWidth = parent.node.offsetWidth;
+		}
+		if (offsetHeight < 0) {
+			offsetHeight = parent.node.offsetHeight;
+		}
+
+		var dir = layout.direction;
+		var spacing = layout.spacing;
+		var box = boxSizingProperty.get(parent);
+		var sizers = BoxLayoutPrivate.sizersProperty.get(layout);
+		var fixedSpace = fixedSpaceProperty.get(layout);
+
+		var top = box.paddingTop;
+		var left = box.paddingLeft;
+		var width = offsetWidth - box.horizontalSum;
+		var height = offsetHeight - box.verticalSum;
+
+		if (dir === Direction.LeftToRight) {
+			phosphor_boxengine_1.boxCalc(sizers, Math.max(0, width - fixedSpace));
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				if (widget.isHidden) {
+					continue;
+				}
+				var size = sizers[i].size;
+				setGeometry(widget, left, top, size, height);
+				left += size + spacing;
+			}
+		}
+		else if (dir === Direction.TopToBottom) {
+			phosphor_boxengine_1.boxCalc(sizers, Math.max(0, height - fixedSpace));
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				if (widget.isHidden) {
+					continue;
+				}
+				var size = sizers[i].size;
+				setGeometry(widget, left, top, width, size);
+				top += size + spacing;
+			}
+		}
+		else if (dir === Direction.RightToLeft) {
+			left += width;
+			phosphor_boxengine_1.boxCalc(sizers, Math.max(0, width - fixedSpace));
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				if (widget.isHidden) {
+					continue;
+				}
+				var size = sizers[i].size;
+				setGeometry(widget, left - size, top, size, height);
+				left -= size + spacing;
+			}
+		}
+		else {
+			top += height;
+			phosphor_boxengine_1.boxCalc(sizers, Math.max(0, height - fixedSpace));
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				if (widget.isHidden) {
+					continue;
+				}
+				var size = sizers[i].size;
+				setGeometry(widget, left, top - size, width, size);
+				top -= size + spacing;
+			}
+		}
+	}
+	BoxLayoutPrivate.update = update;
+
+	var rectProperty = new phosphor_properties_1.Property({
+		name: 'rect',
+		create: function () { return ({ top: NaN, left: NaN, width: NaN, height: NaN }); },
+	});
+
+	var boxSizingProperty = new phosphor_properties_1.Property({
+		name: 'boxSizing',
+		create: function (owner) { return phosphor_domutil_1.boxSizing(owner.node); },
+	});
+
+	var fixedSpaceProperty = new phosphor_properties_1.Property({
+		name: 'fixedSpace',
+		value: 0,
+	});
+
+	function onDirectionChanged(layout) {
+		updateParentDirection(layout);
+		if (layout.parent)
+			layout.parent.fit();
+	}
+
+	function onSpacingChanged(layout) {
+		if (layout.parent)
+			layout.parent.fit();
+	}
+
+	function onChildPropertyChanged(child) {
+		var parent = child.parent;
+		var layout = parent && parent.layout;
+		if (layout instanceof BoxLayout)
+			parent.fit();
+	}
+
+	function updateParentDirection(layout) {
+		if (!layout.parent)
+			return;
+		var parent = layout.parent;
+		var dir = layout.direction;
+		parent.toggleClass(LEFT_TO_RIGHT_CLASS, dir === Direction.LeftToRight);
+		parent.toggleClass(RIGHT_TO_LEFT_CLASS, dir === Direction.RightToLeft);
+		parent.toggleClass(TOP_TO_BOTTOM_CLASS, dir === Direction.TopToBottom);
+		parent.toggleClass(BOTTOM_TO_TOP_CLASS, dir === Direction.BottomToTop);
+	}
+
+	function setGeometry(widget, left, top, width, height) {
+		var resized = false;
+		var style = widget.node.style;
+		var rect = rectProperty.get(widget);
+		if (rect.top !== top) {
+			rect.top = top;
+			style.top = top + 'px';
+		}
+		if (rect.left !== left) {
+			rect.left = left;
+			style.left = left + 'px';
+		}
+		if (rect.width !== width) {
+			resized = true;
+			rect.width = width;
+			style.width = width + 'px';
+		}
+		if (rect.height !== height) {
+			resized = true;
+			rect.height = height;
+			style.height = height + 'px';
+		}
+		if (resized) {
+			phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
+		}
+	}
+})(BoxLayoutPrivate || (BoxLayoutPrivate = {}));
 
 },{"./index.css":4,"phosphor-arrays":6,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-widget":40}],6:[function(require,module,exports){
 
@@ -5490,6 +5639,7 @@ var phosphor_properties_1 = require('phosphor-properties');
 var phosphor_widget_1 = require('phosphor-widget');
 require('./index.css');
 
+
 var SPLIT_PANEL_CLASS = 'p-SplitPanel';
 
 var SPLIT_HANDLE_CLASS = 'p-SplitHandle';
@@ -5515,36 +5665,26 @@ var SplitPanel = (function (_super) {
 
 	function SplitPanel() {
 		_super.call(this);
-		this._fixedSpace = 0;
-		this._pendingSizes = false;
-		this._box = null;
-		this._sizers = [];
 		this._pressData = null;
 		this.addClass(SPLIT_PANEL_CLASS);
-		this.addClass(HORIZONTAL_CLASS);
 	}
 
-	SplitPanel.getStretch = function (widget) {
-		return SplitPanel.stretchProperty.get(widget);
-	};
-
-	SplitPanel.setStretch = function (widget, value) {
-		SplitPanel.stretchProperty.set(widget, value);
+	SplitPanel.createLayout = function () {
+		return new SplitLayout();
 	};
 
 	SplitPanel.prototype.dispose = function () {
 		this._releaseMouse();
-		this._sizers.length = 0;
 		_super.prototype.dispose.call(this);
 	};
 	Object.defineProperty(SplitPanel.prototype, "orientation", {
 
 		get: function () {
-			return SplitPanel.orientationProperty.get(this);
+			return this.layout.orientation;
 		},
 
 		set: function (value) {
-			SplitPanel.orientationProperty.set(this, value);
+			this.layout.orientation = value;
 		},
 		enumerable: true,
 		configurable: true
@@ -5552,37 +5692,26 @@ var SplitPanel = (function (_super) {
 	Object.defineProperty(SplitPanel.prototype, "spacing", {
 
 		get: function () {
-			return SplitPanel.spacingProperty.get(this);
+			return this.layout.spacing;
 		},
 
 		set: function (value) {
-			SplitPanel.spacingProperty.set(this, value);
+			this.layout.spacing = value;
 		},
 		enumerable: true,
 		configurable: true
 	});
 
 	SplitPanel.prototype.sizes = function () {
-		return normalize(this._sizers.map(function (sizer) { return sizer.size; }));
+		return this.layout.sizes();
 	};
 
 	SplitPanel.prototype.setSizes = function (sizes) {
-		var normed = normalize(sizes);
-		for (var i = 0, n = this._sizers.length; i < n; ++i) {
-			var hint = Math.max(0, normed[i] || 0);
-			var sizer = this._sizers[i];
-			sizer.sizeHint = hint;
-			sizer.size = hint;
-		}
-		this._pendingSizes = true;
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
+		this.layout.setSizes(sizes);
 	};
 
 	SplitPanel.prototype.handleEvent = function (event) {
 		switch (event.type) {
-			case 'keydown':
-				this._evtKeyDown(event);
-				break;
 			case 'mousedown':
 				this._evtMouseDown(event);
 				break;
@@ -5591,6 +5720,9 @@ var SplitPanel = (function (_super) {
 				break;
 			case 'mouseup':
 				this._evtMouseUp(event);
+				break;
+			case 'keydown':
+				this._evtKeyDown(event);
 				break;
 			case 'keyup':
 			case 'keypress':
@@ -5602,217 +5734,12 @@ var SplitPanel = (function (_super) {
 		}
 	};
 
-	SplitPanel.prototype.onChildAdded = function (msg) {
-		var sizer = createSizer(averageSize(this._sizers));
-		arrays.insert(this._sizers, msg.currentIndex, sizer);
-		this.node.appendChild(msg.child.node);
-		this.node.appendChild(getHandle(msg.child).node);
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgAfterAttach);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	SplitPanel.prototype.onChildMoved = function (msg) {
-		arrays.move(this._sizers, msg.previousIndex, msg.currentIndex);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	SplitPanel.prototype.onChildRemoved = function (msg) {
-		arrays.removeAt(this._sizers, msg.previousIndex);
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgBeforeDetach);
-		this.node.removeChild(msg.child.node);
-		this.node.removeChild(getHandle(msg.child).node);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-		resetGeometry(msg.child);
-	};
-
-	SplitPanel.prototype.onAfterShow = function (msg) {
-		_super.prototype.onAfterShow.call(this, msg);
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
 	SplitPanel.prototype.onAfterAttach = function (msg) {
-		_super.prototype.onAfterAttach.call(this, msg);
 		this.node.addEventListener('mousedown', this);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
 	};
 
 	SplitPanel.prototype.onBeforeDetach = function (msg) {
-		_super.prototype.onBeforeDetach.call(this, msg);
 		this.node.removeEventListener('mousedown', this);
-	};
-
-	SplitPanel.prototype.onChildShown = function (msg) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	SplitPanel.prototype.onChildHidden = function (msg) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	SplitPanel.prototype.onResize = function (msg) {
-		if (this.isVisible) {
-			var width = msg.width < 0 ? this.node.offsetWidth : msg.width;
-			var height = msg.height < 0 ? this.node.offsetHeight : msg.height;
-			this._layoutChildren(width, height);
-		}
-	};
-
-	SplitPanel.prototype.onUpdateRequest = function (msg) {
-		if (this.isVisible) {
-			this._layoutChildren(this.node.offsetWidth, this.node.offsetHeight);
-		}
-	};
-
-	SplitPanel.prototype.onLayoutRequest = function (msg) {
-		if (this.isAttached) {
-			this._setupGeometry();
-		}
-	};
-
-	SplitPanel.prototype._setupGeometry = function () {
-
-		var visibleCount = 0;
-		var orientation = this.orientation;
-		var lastVisibleHandle = null;
-		for (var i = 0, n = this.childCount(); i < n; ++i) {
-			var widget = this.childAt(i);
-			var handle = getHandle(widget);
-			handle.hidden = widget.hidden;
-			handle.orientation = orientation;
-			if (!handle.hidden) {
-				lastVisibleHandle = handle;
-				visibleCount++;
-			}
-		}
-
-		if (lastVisibleHandle)
-			lastVisibleHandle.hidden = true;
-		this._fixedSpace = this.spacing * Math.max(0, visibleCount - 1);
-
-		var minW = 0;
-		var minH = 0;
-		var maxW = Infinity;
-		var maxH = Infinity;
-		if (orientation === Orientation.Horizontal) {
-			minW = this._fixedSpace;
-			maxW = visibleCount > 0 ? minW : maxW;
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				var sizer = this._sizers[i];
-				if (sizer.size > 0) {
-					sizer.sizeHint = sizer.size;
-				}
-				if (widget.hidden) {
-					sizer.minSize = 0;
-					sizer.maxSize = 0;
-					continue;
-				}
-				var limits = phosphor_domutil_1.sizeLimits(widget.node);
-				sizer.stretch = SplitPanel.getStretch(widget);
-				sizer.minSize = limits.minWidth;
-				sizer.maxSize = limits.maxWidth;
-				minW += limits.minWidth;
-				maxW += limits.maxWidth;
-				minH = Math.max(minH, limits.minHeight);
-				maxH = Math.min(maxH, limits.maxHeight);
-			}
-		}
-		else {
-			minH = this._fixedSpace;
-			maxH = visibleCount > 0 ? minH : maxH;
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				var sizer = this._sizers[i];
-				if (sizer.size > 0) {
-					sizer.sizeHint = sizer.size;
-				}
-				if (widget.hidden) {
-					sizer.minSize = 0;
-					sizer.maxSize = 0;
-					continue;
-				}
-				var limits = phosphor_domutil_1.sizeLimits(widget.node);
-				sizer.stretch = SplitPanel.getStretch(widget);
-				sizer.minSize = limits.minHeight;
-				sizer.maxSize = limits.maxHeight;
-				minH += limits.minHeight;
-				maxH += limits.maxHeight;
-				minW = Math.max(minW, limits.minWidth);
-				maxW = Math.min(maxW, limits.maxWidth);
-			}
-		}
-
-		this._box = phosphor_domutil_1.boxSizing(this.node);
-		minW += this._box.horizontalSum;
-		minH += this._box.verticalSum;
-		maxW += this._box.horizontalSum;
-		maxH += this._box.verticalSum;
-
-		var style = this.node.style;
-		style.minWidth = minW + 'px';
-		style.minHeight = minH + 'px';
-		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
-		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
-
-		if (this.parent)
-			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Panel.MsgLayoutRequest);
-
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	SplitPanel.prototype._layoutChildren = function (offsetWidth, offsetHeight) {
-
-		if (this.childCount() === 0) {
-			return;
-		}
-
-		var box = this._box || (this._box = phosphor_domutil_1.boxSizing(this.node));
-
-		var top = box.paddingTop;
-		var left = box.paddingLeft;
-		var width = offsetWidth - box.horizontalSum;
-		var height = offsetHeight - box.verticalSum;
-
-		var horizontal = this.orientation === Orientation.Horizontal;
-
-		if (this._pendingSizes) {
-			var space = horizontal ? width : height;
-			var adjusted = Math.max(0, space - this._fixedSpace);
-			for (var i = 0, n = this._sizers.length; i < n; ++i) {
-				this._sizers[i].sizeHint *= adjusted;
-			}
-			this._pendingSizes = false;
-		}
-
-		var spacing = this.spacing;
-		if (horizontal) {
-			phosphor_boxengine_1.boxCalc(this._sizers, Math.max(0, width - this._fixedSpace));
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				if (widget.hidden) {
-					continue;
-				}
-				var size = this._sizers[i].size;
-				setGeometry(widget, left, top, size, height);
-				getHandle(widget).setGeometry(left + size, top, spacing, height);
-				left += size + spacing;
-			}
-		}
-		else {
-			phosphor_boxengine_1.boxCalc(this._sizers, Math.max(0, height - this._fixedSpace));
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				if (widget.hidden) {
-					continue;
-				}
-				var size = this._sizers[i].size;
-				setGeometry(widget, left, top, width, size);
-				getHandle(widget).setGeometry(left, top + size, width, spacing);
-				top += size + spacing;
-			}
-		}
 	};
 
 	SplitPanel.prototype._evtKeyDown = function (event) {
@@ -5825,157 +5752,325 @@ var SplitPanel = (function (_super) {
 	};
 
 	SplitPanel.prototype._evtMouseDown = function (event) {
+
 		if (event.button !== 0) {
 			return;
 		}
-		var index = findHandleIndex(this, event.target);
+
+		var layout = this.layout;
+		var target = event.target;
+		var _a = layout.findHandle(target), index = _a.index, handle = _a.handle;
 		if (index === -1) {
 			return;
 		}
+
 		event.preventDefault();
 		event.stopPropagation();
+
+		document.addEventListener('mouseup', this, true);
+		document.addEventListener('mousemove', this, true);
 		document.addEventListener('keydown', this, true);
 		document.addEventListener('keyup', this, true);
 		document.addEventListener('keypress', this, true);
 		document.addEventListener('contextmenu', this, true);
-		document.addEventListener('mouseup', this, true);
-		document.addEventListener('mousemove', this, true);
+
 		var delta;
-		var node = getHandle(this.childAt(index)).node;
-		if (this.orientation === Orientation.Horizontal) {
-			delta = event.clientX - node.getBoundingClientRect().left;
+		var rect = handle.getBoundingClientRect();
+		if (layout.orientation === Orientation.Horizontal) {
+			delta = event.clientX - rect.left;
 		}
 		else {
-			delta = event.clientY - node.getBoundingClientRect().top;
+			delta = event.clientY - rect.top;
 		}
-		var override = phosphor_domutil_1.overrideCursor(window.getComputedStyle(node).cursor);
+
+		var style = window.getComputedStyle(handle);
+		var override = phosphor_domutil_1.overrideCursor(style.cursor);
 		this._pressData = { index: index, delta: delta, override: override };
 	};
 
 	SplitPanel.prototype._evtMouseMove = function (event) {
+
 		event.preventDefault();
 		event.stopPropagation();
+
 		var pos;
 		var data = this._pressData;
+		var layout = this.layout;
 		var rect = this.node.getBoundingClientRect();
-		if (this.orientation === Orientation.Horizontal) {
+		if (layout.orientation === Orientation.Horizontal) {
 			pos = event.clientX - data.delta - rect.left;
 		}
 		else {
 			pos = event.clientY - data.delta - rect.top;
 		}
-		this._moveHandle(data.index, pos);
+
+		layout.moveHandle(data.index, pos);
 	};
 
 	SplitPanel.prototype._evtMouseUp = function (event) {
+
 		if (event.button !== 0) {
 			return;
 		}
+
 		event.preventDefault();
 		event.stopPropagation();
+
 		this._releaseMouse();
 	};
 
 	SplitPanel.prototype._releaseMouse = function () {
+
 		if (!this._pressData) {
 			return;
 		}
+
 		this._pressData.override.dispose();
 		this._pressData = null;
+
+		document.removeEventListener('mouseup', this, true);
+		document.removeEventListener('mousemove', this, true);
 		document.removeEventListener('keydown', this, true);
 		document.removeEventListener('keyup', this, true);
 		document.removeEventListener('keypress', this, true);
 		document.removeEventListener('contextmenu', this, true);
-		document.removeEventListener('mouseup', this, true);
-		document.removeEventListener('mousemove', this, true);
+	};
+	return SplitPanel;
+})(phosphor_widget_1.Panel);
+exports.SplitPanel = SplitPanel;
+
+var SplitPanel;
+(function (SplitPanel) {
+
+	SplitPanel.Horizontal = Orientation.Horizontal;
+
+	SplitPanel.Vertical = Orientation.Vertical;
+
+	function getStretch(widget) {
+		return SplitLayout.getStretch(widget);
+	}
+	SplitPanel.getStretch = getStretch;
+
+	function setStretch(widget, value) {
+		SplitLayout.setStretch(widget, value);
+	}
+	SplitPanel.setStretch = setStretch;
+})(SplitPanel = exports.SplitPanel || (exports.SplitPanel = {}));
+
+var SplitLayout = (function (_super) {
+	__extends(SplitLayout, _super);
+	function SplitLayout() {
+		_super.apply(this, arguments);
+	}
+	Object.defineProperty(SplitLayout.prototype, "orientation", {
+
+		get: function () {
+			return SplitLayoutPrivate.orientationProperty.get(this);
+		},
+
+		set: function (value) {
+			SplitLayoutPrivate.orientationProperty.set(this, value);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(SplitLayout.prototype, "spacing", {
+
+		get: function () {
+			return SplitLayoutPrivate.spacingProperty.get(this);
+		},
+
+		set: function (value) {
+			SplitLayoutPrivate.spacingProperty.set(this, value);
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	SplitLayout.prototype.sizes = function () {
+		var sizers = SplitLayoutPrivate.sizersProperty.get(this);
+		return SplitLayoutPrivate.normalize(sizers.map(function (s) { return s.size; }));
 	};
 
-	SplitPanel.prototype._moveHandle = function (index, pos) {
+	SplitLayout.prototype.setSizes = function (sizes) {
+		var normed = SplitLayoutPrivate.normalize(sizes);
+		var sizers = SplitLayoutPrivate.sizersProperty.get(this);
+		for (var i = 0, n = sizers.length; i < n; ++i) {
+			var hint = Math.max(0, normed[i] || 0);
+			var sizer = sizers[i];
+			sizer.sizeHint = hint;
+			sizer.size = hint;
+		}
+		SplitLayoutPrivate.pendingSizesProperty.set(this, true);
+		if (this.parent)
+			this.parent.update();
+	};
+
+	SplitLayout.prototype.findHandle = function (target) {
+		var handleProperty = SplitLayoutPrivate.splitHandleProperty;
+		for (var i = 0, n = this.childCount(); i < n; ++i) {
+			var handle = handleProperty.get(this.childAt(i)).node;
+			if (handle.contains(target))
+				return { index: i, handle: handle };
+		}
+		return { index: -1, handle: null };
+	};
+
+	SplitLayout.prototype.moveHandle = function (index, position) {
 
 		var widget = this.childAt(index);
 		if (!widget) {
 			return;
 		}
 
-		var handle = getHandle(widget);
-		if (handle.hidden) {
+		var handle = SplitLayoutPrivate.splitHandleProperty.get(widget);
+		if (handle.isHidden) {
 			return;
 		}
 
 		var delta;
 		if (this.orientation === Orientation.Horizontal) {
-			delta = pos - handle.node.offsetLeft;
+			delta = position - handle.node.offsetLeft;
 		}
 		else {
-			delta = pos - handle.node.offsetTop;
+			delta = position - handle.node.offsetTop;
 		}
 
 		if (delta === 0) {
 			return;
 		}
 
-		for (var i = 0, n = this._sizers.length; i < n; ++i) {
-			var sizer = this._sizers[i];
+		var sizers = SplitLayoutPrivate.sizersProperty.get(this);
+		for (var _i = 0; _i < sizers.length; _i++) {
+			var sizer = sizers[_i];
 			if (sizer.size > 0)
 				sizer.sizeHint = sizer.size;
 		}
 
 		if (delta > 0) {
-			growSizer(this._sizers, index, delta);
+			SplitLayoutPrivate.growSizer(sizers, index, delta);
 		}
 		else {
-			shrinkSizer(this._sizers, index, -delta);
+			SplitLayoutPrivate.shrinkSizer(sizers, index, -delta);
 		}
 
-
-
-
-
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
+		if (this.parent)
+			this.parent.update();
 	};
 
-	SplitPanel.prototype._onOrientationChanged = function (old, value) {
-		this.toggleClass(HORIZONTAL_CLASS, value === Orientation.Horizontal);
-		this.toggleClass(VERTICAL_CLASS, value === Orientation.Vertical);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
+	SplitLayout.prototype.initialize = function () {
+		SplitLayoutPrivate.initialize(this);
+		_super.prototype.initialize.call(this);
 	};
 
-	SplitPanel.Horizontal = Orientation.Horizontal;
+	SplitLayout.prototype.attachChild = function (index, child) {
+		var handle = SplitLayoutPrivate.splitHandleProperty.get(child);
+		var sizers = SplitLayoutPrivate.sizersProperty.get(this);
+		var average = SplitLayoutPrivate.averageSize(sizers);
+		var sizer = SplitLayoutPrivate.createSizer(average);
+		arrays.insert(sizers, index, sizer);
+		this.parent.node.appendChild(child.node);
+		this.parent.node.appendChild(handle.node);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
+		this.parent.fit();
+	};
 
-	SplitPanel.Vertical = Orientation.Vertical;
+	SplitLayout.prototype.moveChild = function (fromIndex, toIndex, child) {
+		var sizers = SplitLayoutPrivate.sizersProperty.get(this);
+		arrays.move(sizers, fromIndex, toIndex);
+		this.parent.fit();
+	};
 
-	SplitPanel.orientationProperty = new phosphor_properties_1.Property({
-		name: 'orientation',
-		value: Orientation.Horizontal,
-		changed: function (owner, old, value) { return owner._onOrientationChanged(old, value); },
-	});
+	SplitLayout.prototype.detachChild = function (index, child) {
+		var handle = SplitLayoutPrivate.splitHandleProperty.get(child);
+		var sizers = SplitLayoutPrivate.sizersProperty.get(this);
+		arrays.removeAt(sizers, index);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
+		this.parent.node.removeChild(child.node);
+		this.parent.node.removeChild(handle.node);
+		SplitLayoutPrivate.resetGeometry(child);
+		this.parent.fit();
+	};
 
-	SplitPanel.spacingProperty = new phosphor_properties_1.Property({
-		name: 'spacing',
-		value: 3,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: function (owner) { return phosphor_messaging_1.postMessage(owner, phosphor_widget_1.Panel.MsgLayoutRequest); },
-	});
+	SplitLayout.prototype.onAfterShow = function (msg) {
+		_super.prototype.onAfterShow.call(this, msg);
+		this.parent.update();
+	};
 
-	SplitPanel.stretchProperty = new phosphor_properties_1.Property({
-		name: 'stretch',
-		value: 0,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: onChildPropertyChanged,
-	});
-	return SplitPanel;
-})(phosphor_widget_1.Panel);
-exports.SplitPanel = SplitPanel;
+	SplitLayout.prototype.onAfterAttach = function (msg) {
+		_super.prototype.onAfterAttach.call(this, msg);
+		this.parent.fit();
+	};
+
+	SplitLayout.prototype.onChildShown = function (msg) {
+
+
+		if (SplitLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			this.parent.fit();
+		}
+	};
+
+	SplitLayout.prototype.onChildHidden = function (msg) {
+
+
+		if (SplitLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			this.parent.fit();
+		}
+	};
+
+	SplitLayout.prototype.onResize = function (msg) {
+		if (this.parent.isVisible) {
+			SplitLayoutPrivate.update(this, msg.width, msg.height);
+		}
+	};
+
+	SplitLayout.prototype.onUpdateRequest = function (msg) {
+		if (this.parent.isVisible) {
+			SplitLayoutPrivate.update(this, -1, -1);
+		}
+	};
+
+	SplitLayout.prototype.onFitRequest = function (msg) {
+		if (this.parent.isAttached) {
+			SplitLayoutPrivate.fit(this);
+		}
+	};
+	return SplitLayout;
+})(phosphor_widget_1.PanelLayout);
+exports.SplitLayout = SplitLayout;
+
+var SplitLayout;
+(function (SplitLayout) {
+
+	SplitLayout.Horizontal = Orientation.Horizontal;
+
+	SplitLayout.Vertical = Orientation.Vertical;
+
+	function getStretch(widget) {
+		return SplitLayoutPrivate.stretchProperty.get(widget);
+	}
+	SplitLayout.getStretch = getStretch;
+
+	function setStretch(widget, value) {
+		SplitLayoutPrivate.stretchProperty.set(widget, value);
+	}
+	SplitLayout.setStretch = setStretch;
+})(SplitLayout = exports.SplitLayout || (exports.SplitLayout = {}));
 
 var SplitHandle = (function (_super) {
 	__extends(SplitHandle, _super);
 
 	function SplitHandle() {
 		_super.call(this);
-		this._hidden = false;
-		this._orientation = Orientation.Horizontal;
 		this.addClass(SPLIT_HANDLE_CLASS);
-		this.addClass(HORIZONTAL_CLASS);
 	}
 
 	SplitHandle.createNode = function () {
@@ -5985,39 +6080,23 @@ var SplitHandle = (function (_super) {
 		node.appendChild(overlay);
 		return node;
 	};
-	Object.defineProperty(SplitHandle.prototype, "hidden", {
+	Object.defineProperty(SplitHandle.prototype, "isHidden", {
 
 		get: function () {
-			return this._hidden;
-		},
-
-		set: function (hidden) {
-			if (hidden === this._hidden) {
-				return;
-			}
-			this._hidden = hidden;
-			this.toggleClass(HIDDEN_CLASS, hidden);
+			return this.hasClass(HIDDEN_CLASS);
 		},
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(SplitHandle.prototype, "orientation", {
 
-		get: function () {
-			return this._orientation;
-		},
+	SplitHandle.prototype.setHidden = function (value) {
+		this.toggleClass(HIDDEN_CLASS, value);
+	};
 
-		set: function (value) {
-			if (value === this._orientation) {
-				return;
-			}
-			this._orientation = value;
-			this.toggleClass(HORIZONTAL_CLASS, value === Orientation.Horizontal);
-			this.toggleClass(VERTICAL_CLASS, value === Orientation.Vertical);
-		},
-		enumerable: true,
-		configurable: true
-	});
+	SplitHandle.prototype.setOrientation = function (value) {
+		this.toggleClass(HORIZONTAL_CLASS, value === Orientation.Horizontal);
+		this.toggleClass(VERTICAL_CLASS, value === Orientation.Vertical);
+	};
 
 	SplitHandle.prototype.setGeometry = function (left, top, width, height) {
 		var style = this.node.style;
@@ -6029,196 +6108,429 @@ var SplitHandle = (function (_super) {
 	return SplitHandle;
 })(phosphor_nodewrapper_1.NodeWrapper);
 
-var splitHandleProperty = new phosphor_properties_1.Property({
-	name: 'splitHandle',
-	create: function (owner) { return new SplitHandle(); },
-});
+var SplitLayoutPrivate;
+(function (SplitLayoutPrivate) {
 
-var rectProperty = new phosphor_properties_1.Property({
-	name: 'rect',
-	create: createRect,
-});
+	SplitLayoutPrivate.IsIE = /Trident/.test(navigator.userAgent);
 
-function getHandle(widget) {
-	return splitHandleProperty.get(widget);
-}
+	SplitLayoutPrivate.orientationProperty = new phosphor_properties_1.Property({
+		name: 'orientation',
+		value: Orientation.Horizontal,
+		changed: onOrientationChanged,
+	});
 
-function createRect() {
-	return { top: NaN, left: NaN, width: NaN, height: NaN };
-}
+	SplitLayoutPrivate.spacingProperty = new phosphor_properties_1.Property({
+		name: 'spacing',
+		value: 3,
+		coerce: function (owner, value) { return Math.max(0, value | 0); },
+		changed: onSpacingChanged,
+	});
 
-function getRect(widget) {
-	return rectProperty.get(widget);
-}
+	SplitLayoutPrivate.sizersProperty = new phosphor_properties_1.Property({
+		name: 'sizers',
+		create: function () { return []; },
+	});
 
-function findHandleIndex(panel, target) {
-	for (var i = 0, n = panel.childCount(); i < n; ++i) {
-		var handle = getHandle(panel.childAt(i));
-		if (handle.node.contains(target))
-			return i;
+	SplitLayoutPrivate.pendingSizesProperty = new phosphor_properties_1.Property({
+		name: 'pendingSizes',
+		value: false,
+	});
+
+	SplitLayoutPrivate.stretchProperty = new phosphor_properties_1.Property({
+		name: 'stretch',
+		value: 0,
+		coerce: function (owner, value) { return Math.max(0, value | 0); },
+		changed: onChildPropertyChanged,
+	});
+
+	SplitLayoutPrivate.splitHandleProperty = new phosphor_properties_1.Property({
+		name: 'splitHandle',
+		create: function (owner) { return new SplitHandle(); },
+	});
+
+	function createSizer(size) {
+		var sizer = new phosphor_boxengine_1.BoxSizer();
+		sizer.sizeHint = size | 0;
+		return sizer;
 	}
-	return -1;
-}
+	SplitLayoutPrivate.createSizer = createSizer;
 
-function setGeometry(widget, left, top, width, height) {
-	var resized = false;
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	if (rect.top !== top) {
-		rect.top = top;
-		style.top = top + 'px';
+	function averageSize(sizers) {
+		if (sizers.length === 0)
+			return 0;
+		return sizers.reduce(function (v, s) { return v + s.size; }, 0) / sizers.length;
 	}
-	if (rect.left !== left) {
-		rect.left = left;
-		style.left = left + 'px';
-	}
-	if (rect.width !== width) {
-		resized = true;
-		rect.width = width;
-		style.width = width + 'px';
-	}
-	if (rect.height !== height) {
-		resized = true;
-		rect.height = height;
-		style.height = height + 'px';
-	}
-	if (resized) {
-		phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
-	}
-}
+	SplitLayoutPrivate.averageSize = averageSize;
 
-function resetGeometry(widget) {
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	rect.top = NaN;
-	rect.left = NaN;
-	rect.width = NaN;
-	rect.height = NaN;
-	style.top = '';
-	style.left = '';
-	style.width = '';
-	style.height = '';
-}
-
-function onChildPropertyChanged(child) {
-	if (child.parent instanceof SplitPanel) {
-		phosphor_messaging_1.postMessage(child.parent, phosphor_widget_1.Panel.MsgLayoutRequest);
-	}
-}
-
-function createSizer(size) {
-	var sizer = new phosphor_boxengine_1.BoxSizer();
-	sizer.sizeHint = size | 0;
-	return sizer;
-}
-
-function averageSize(sizers) {
-	var sum = sizers.reduce(function (v, s) { return v + s.size; }, 0);
-	return sum > 0 ? sum / sizers.length : 0;
-}
-
-function growSizer(sizers, index, delta) {
-	var growLimit = 0;
-	for (var i = 0; i <= index; ++i) {
-		var sizer = sizers[i];
-		growLimit += sizer.maxSize - sizer.size;
-	}
-	var shrinkLimit = 0;
-	for (var i = index + 1, n = sizers.length; i < n; ++i) {
-		var sizer = sizers[i];
-		shrinkLimit += sizer.size - sizer.minSize;
-	}
-	delta = Math.min(delta, growLimit, shrinkLimit);
-	var grow = delta;
-	for (var i = index; i >= 0 && grow > 0; --i) {
-		var sizer = sizers[i];
-		var limit = sizer.maxSize - sizer.size;
-		if (limit >= grow) {
-			sizer.sizeHint = sizer.size + grow;
-			grow = 0;
+	function normalize(values) {
+		var n = values.length;
+		if (n === 0) {
+			return [];
 		}
-		else {
-			sizer.sizeHint = sizer.size + limit;
-			grow -= limit;
-		}
-	}
-	var shrink = delta;
-	for (var i = index + 1, n = sizers.length; i < n && shrink > 0; ++i) {
-		var sizer = sizers[i];
-		var limit = sizer.size - sizer.minSize;
-		if (limit >= shrink) {
-			sizer.sizeHint = sizer.size - shrink;
-			shrink = 0;
-		}
-		else {
-			sizer.sizeHint = sizer.size - limit;
-			shrink -= limit;
-		}
-	}
-}
-
-function shrinkSizer(sizers, index, delta) {
-	var growLimit = 0;
-	for (var i = index + 1, n = sizers.length; i < n; ++i) {
-		var sizer = sizers[i];
-		growLimit += sizer.maxSize - sizer.size;
-	}
-	var shrinkLimit = 0;
-	for (var i = 0; i <= index; ++i) {
-		var sizer = sizers[i];
-		shrinkLimit += sizer.size - sizer.minSize;
-	}
-	delta = Math.min(delta, growLimit, shrinkLimit);
-	var grow = delta;
-	for (var i = index + 1, n = sizers.length; i < n && grow > 0; ++i) {
-		var sizer = sizers[i];
-		var limit = sizer.maxSize - sizer.size;
-		if (limit >= grow) {
-			sizer.sizeHint = sizer.size + grow;
-			grow = 0;
-		}
-		else {
-			sizer.sizeHint = sizer.size + limit;
-			grow -= limit;
-		}
-	}
-	var shrink = delta;
-	for (var i = index; i >= 0 && shrink > 0; --i) {
-		var sizer = sizers[i];
-		var limit = sizer.size - sizer.minSize;
-		if (limit >= shrink) {
-			sizer.sizeHint = sizer.size - shrink;
-			shrink = 0;
-		}
-		else {
-			sizer.sizeHint = sizer.size - limit;
-			shrink -= limit;
-		}
-	}
-}
-
-function normalize(values) {
-	var n = values.length;
-	if (n === 0) {
-		return [];
-	}
-	var sum = 0;
-	for (var i = 0; i < n; ++i) {
-		sum += values[i];
-	}
-	var result = new Array(n);
-	if (sum === 0) {
+		var sum = 0;
 		for (var i = 0; i < n; ++i) {
-			result[i] = 1 / n;
+			sum += values[i];
+		}
+		var result = new Array(n);
+		if (sum === 0) {
+			for (var i = 0; i < n; ++i) {
+				result[i] = 1 / n;
+			}
+		}
+		else {
+			for (var i = 0; i < n; ++i) {
+				result[i] = values[i] / sum;
+			}
+		}
+		return result;
+	}
+	SplitLayoutPrivate.normalize = normalize;
+
+	function initialize(layout) {
+		updateParentOrientation(layout);
+	}
+	SplitLayoutPrivate.initialize = initialize;
+
+	function resetGeometry(widget) {
+		var rect = rectProperty.get(widget);
+		var style = widget.node.style;
+		rect.top = NaN;
+		rect.left = NaN;
+		rect.width = NaN;
+		rect.height = NaN;
+		style.top = '';
+		style.left = '';
+		style.width = '';
+		style.height = '';
+	}
+	SplitLayoutPrivate.resetGeometry = resetGeometry;
+
+	function fit(layout) {
+
+		var parent = layout.parent;
+		if (!parent) {
+			return;
+		}
+
+		var visibleCount = 0;
+		var orientation = layout.orientation;
+		var lastVisibleHandle = null;
+		for (var i = 0, n = layout.childCount(); i < n; ++i) {
+			var widget = layout.childAt(i);
+			var handle = SplitLayoutPrivate.splitHandleProperty.get(widget);
+			handle.setHidden(widget.isHidden);
+			handle.setOrientation(orientation);
+			if (!widget.isHidden) {
+				lastVisibleHandle = handle;
+				visibleCount++;
+			}
+		}
+
+		if (lastVisibleHandle)
+			lastVisibleHandle.setHidden(true);
+		var fixedSpace = layout.spacing * Math.max(0, visibleCount - 1);
+		fixedSpaceProperty.set(layout, fixedSpace);
+
+		var minW = 0;
+		var minH = 0;
+		var maxW = Infinity;
+		var maxH = Infinity;
+		var sizers = SplitLayoutPrivate.sizersProperty.get(layout);
+		if (orientation === Orientation.Horizontal) {
+			minW = fixedSpace;
+			maxW = visibleCount > 0 ? minW : maxW;
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				var sizer = sizers[i];
+				if (sizer.size > 0) {
+					sizer.sizeHint = sizer.size;
+				}
+				if (widget.isHidden) {
+					sizer.minSize = 0;
+					sizer.maxSize = 0;
+					continue;
+				}
+				var limits = phosphor_domutil_1.sizeLimits(widget.node);
+				sizer.stretch = SplitLayoutPrivate.stretchProperty.get(widget);
+				sizer.minSize = limits.minWidth;
+				sizer.maxSize = limits.maxWidth;
+				minW += limits.minWidth;
+				maxW += limits.maxWidth;
+				minH = Math.max(minH, limits.minHeight);
+				maxH = Math.min(maxH, limits.maxHeight);
+			}
+		}
+		else {
+			minH = fixedSpace;
+			maxH = visibleCount > 0 ? minH : maxH;
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				var sizer = sizers[i];
+				if (sizer.size > 0) {
+					sizer.sizeHint = sizer.size;
+				}
+				if (widget.isHidden) {
+					sizer.minSize = 0;
+					sizer.maxSize = 0;
+					continue;
+				}
+				var limits = phosphor_domutil_1.sizeLimits(widget.node);
+				sizer.stretch = SplitLayoutPrivate.stretchProperty.get(widget);
+				sizer.minSize = limits.minHeight;
+				sizer.maxSize = limits.maxHeight;
+				minH += limits.minHeight;
+				maxH += limits.maxHeight;
+				minW = Math.max(minW, limits.minWidth);
+				maxW = Math.min(maxW, limits.maxWidth);
+			}
+		}
+
+		var box = phosphor_domutil_1.boxSizing(parent.node);
+		boxSizingProperty.set(parent, box);
+		minW += box.horizontalSum;
+		minH += box.verticalSum;
+		maxW += box.horizontalSum;
+		maxH += box.verticalSum;
+
+		var style = parent.node.style;
+		style.minWidth = minW + 'px';
+		style.minHeight = minH + 'px';
+		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
+		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
+
+		if (parent.parent)
+			phosphor_messaging_1.sendMessage(parent.parent, phosphor_widget_1.Widget.MsgFitRequest);
+
+		phosphor_messaging_1.sendMessage(parent, phosphor_widget_1.Widget.MsgUpdateRequest);
+	}
+	SplitLayoutPrivate.fit = fit;
+
+	function update(layout, offsetWidth, offsetHeight) {
+
+		if (layout.childCount() === 0) {
+			return;
+		}
+
+		var parent = layout.parent;
+		if (!parent) {
+			return;
+		}
+
+		if (offsetWidth < 0) {
+			offsetWidth = parent.node.offsetWidth;
+		}
+		if (offsetHeight < 0) {
+			offsetHeight = parent.node.offsetHeight;
+		}
+
+		var spacing = layout.spacing;
+		var orient = layout.orientation;
+		var box = boxSizingProperty.get(parent);
+		var sizers = SplitLayoutPrivate.sizersProperty.get(layout);
+		var fixedSpace = fixedSpaceProperty.get(layout);
+
+		var top = box.paddingTop;
+		var left = box.paddingLeft;
+		var width = offsetWidth - box.horizontalSum;
+		var height = offsetHeight - box.verticalSum;
+
+		var mainSpace;
+		if (orient === Orientation.Horizontal) {
+			mainSpace = Math.max(0, width - fixedSpace);
+		}
+		else {
+			mainSpace = Math.max(0, height - fixedSpace);
+		}
+
+		if (SplitLayoutPrivate.pendingSizesProperty.get(layout)) {
+			for (var i = 0, n = sizers.length; i < n; ++i) {
+				sizers[i].sizeHint *= mainSpace;
+			}
+			SplitLayoutPrivate.pendingSizesProperty.set(layout, false);
+		}
+
+		phosphor_boxengine_1.boxCalc(sizers, mainSpace);
+
+		if (orient === Orientation.Horizontal) {
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				if (widget.isHidden) {
+					continue;
+				}
+				var size = sizers[i].size;
+				var handle = SplitLayoutPrivate.splitHandleProperty.get(widget);
+				setGeometry(widget, left, top, size, height);
+				handle.setGeometry(left + size, top, spacing, height);
+				left += size + spacing;
+			}
+		}
+		else {
+			for (var i = 0, n = layout.childCount(); i < n; ++i) {
+				var widget = layout.childAt(i);
+				if (widget.isHidden) {
+					continue;
+				}
+				var size = sizers[i].size;
+				var handle = SplitLayoutPrivate.splitHandleProperty.get(widget);
+				setGeometry(widget, left, top, width, size);
+				handle.setGeometry(left, top + size, width, spacing);
+				top += size + spacing;
+			}
 		}
 	}
-	else {
-		for (var i = 0; i < n; ++i) {
-			result[i] = values[i] / sum;
+	SplitLayoutPrivate.update = update;
+
+	function growSizer(sizers, index, delta) {
+		var growLimit = 0;
+		for (var i = 0; i <= index; ++i) {
+			var sizer = sizers[i];
+			growLimit += sizer.maxSize - sizer.size;
+		}
+		var shrinkLimit = 0;
+		for (var i = index + 1, n = sizers.length; i < n; ++i) {
+			var sizer = sizers[i];
+			shrinkLimit += sizer.size - sizer.minSize;
+		}
+		delta = Math.min(delta, growLimit, shrinkLimit);
+		var grow = delta;
+		for (var i = index; i >= 0 && grow > 0; --i) {
+			var sizer = sizers[i];
+			var limit = sizer.maxSize - sizer.size;
+			if (limit >= grow) {
+				sizer.sizeHint = sizer.size + grow;
+				grow = 0;
+			}
+			else {
+				sizer.sizeHint = sizer.size + limit;
+				grow -= limit;
+			}
+		}
+		var shrink = delta;
+		for (var i = index + 1, n = sizers.length; i < n && shrink > 0; ++i) {
+			var sizer = sizers[i];
+			var limit = sizer.size - sizer.minSize;
+			if (limit >= shrink) {
+				sizer.sizeHint = sizer.size - shrink;
+				shrink = 0;
+			}
+			else {
+				sizer.sizeHint = sizer.size - limit;
+				shrink -= limit;
+			}
 		}
 	}
-	return result;
-}
+	SplitLayoutPrivate.growSizer = growSizer;
+
+	function shrinkSizer(sizers, index, delta) {
+		var growLimit = 0;
+		for (var i = index + 1, n = sizers.length; i < n; ++i) {
+			var sizer = sizers[i];
+			growLimit += sizer.maxSize - sizer.size;
+		}
+		var shrinkLimit = 0;
+		for (var i = 0; i <= index; ++i) {
+			var sizer = sizers[i];
+			shrinkLimit += sizer.size - sizer.minSize;
+		}
+		delta = Math.min(delta, growLimit, shrinkLimit);
+		var grow = delta;
+		for (var i = index + 1, n = sizers.length; i < n && grow > 0; ++i) {
+			var sizer = sizers[i];
+			var limit = sizer.maxSize - sizer.size;
+			if (limit >= grow) {
+				sizer.sizeHint = sizer.size + grow;
+				grow = 0;
+			}
+			else {
+				sizer.sizeHint = sizer.size + limit;
+				grow -= limit;
+			}
+		}
+		var shrink = delta;
+		for (var i = index; i >= 0 && shrink > 0; --i) {
+			var sizer = sizers[i];
+			var limit = sizer.size - sizer.minSize;
+			if (limit >= shrink) {
+				sizer.sizeHint = sizer.size - shrink;
+				shrink = 0;
+			}
+			else {
+				sizer.sizeHint = sizer.size - limit;
+				shrink -= limit;
+			}
+		}
+	}
+	SplitLayoutPrivate.shrinkSizer = shrinkSizer;
+
+	var rectProperty = new phosphor_properties_1.Property({
+		name: 'rect',
+		create: function () { return ({ top: NaN, left: NaN, width: NaN, height: NaN }); },
+	});
+
+	var boxSizingProperty = new phosphor_properties_1.Property({
+		name: 'boxSizing',
+		create: function (owner) { return phosphor_domutil_1.boxSizing(owner.node); },
+	});
+
+	var fixedSpaceProperty = new phosphor_properties_1.Property({
+		name: 'fixedSpace',
+		value: 0,
+	});
+
+	function onOrientationChanged(layout) {
+		updateParentOrientation(layout);
+		if (layout.parent)
+			layout.parent.fit();
+	}
+
+	function onSpacingChanged(layout) {
+		if (layout.parent)
+			layout.parent.fit();
+	}
+
+	function onChildPropertyChanged(child) {
+		var parent = child.parent;
+		var layout = parent && parent.layout;
+		if (layout instanceof SplitLayout)
+			parent.fit();
+	}
+
+	function updateParentOrientation(layout) {
+		if (!layout.parent)
+			return;
+		var parent = layout.parent;
+		var orient = layout.orientation;
+		parent.toggleClass(HORIZONTAL_CLASS, orient === Orientation.Horizontal);
+		parent.toggleClass(VERTICAL_CLASS, orient === Orientation.Vertical);
+	}
+
+	function setGeometry(widget, left, top, width, height) {
+		var resized = false;
+		var style = widget.node.style;
+		var rect = rectProperty.get(widget);
+		if (rect.top !== top) {
+			rect.top = top;
+			style.top = top + 'px';
+		}
+		if (rect.left !== left) {
+			rect.left = left;
+			style.left = left + 'px';
+		}
+		if (rect.width !== width) {
+			resized = true;
+			rect.width = width;
+			style.width = width + 'px';
+		}
+		if (rect.height !== height) {
+			resized = true;
+			rect.height = height;
+			style.height = height + 'px';
+		}
+		if (resized) {
+			phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
+		}
+	}
+})(SplitLayoutPrivate || (SplitLayoutPrivate = {}));
 
 },{"./index.css":28,"phosphor-arrays":30,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-widget":40}],30:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
@@ -6245,86 +6557,188 @@ var StackedPanel = (function (_super) {
 	__extends(StackedPanel, _super);
 
 	function StackedPanel() {
+		var _this = this;
 		_super.call(this);
-		this._box = null;
 		this.addClass(STACKED_PANEL_CLASS);
+		var layout = this.layout;
+		layout.currentChanged.connect(function (sender, args) {
+			_this.currentChanged.emit(args);
+		});
+		layout.widgetRemoved.connect(function (sender, args) {
+			_this.widgetRemoved.emit(args);
+		});
 	}
+
+	StackedPanel.createLayout = function () {
+		return new StackedLayout();
+	};
+	Object.defineProperty(StackedPanel.prototype, "currentChanged", {
+
+		get: function () {
+			return StackedPanelPrivate.currentChangedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(StackedPanel.prototype, "widgetRemoved", {
+
+		get: function () {
+			return StackedPanelPrivate.widgetRemovedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
 	Object.defineProperty(StackedPanel.prototype, "currentWidget", {
 
 		get: function () {
-			return StackedPanel.currentWidgetProperty.get(this);
+			return this.layout.currentWidget;
 		},
 
-		set: function (widget) {
-			StackedPanel.currentWidgetProperty.set(this, widget);
+		set: function (value) {
+			this.layout.currentWidget = value;
 		},
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(StackedPanel.prototype, "currentWidgetChanged", {
+	return StackedPanel;
+})(phosphor_widget_1.Panel);
+exports.StackedPanel = StackedPanel;
+
+var StackedLayout = (function (_super) {
+	__extends(StackedLayout, _super);
+	function StackedLayout() {
+		_super.apply(this, arguments);
+	}
+	Object.defineProperty(StackedLayout.prototype, "currentChanged", {
 
 		get: function () {
-			return StackedPanel.currentWidgetProperty.notify.bind(this);
+			return StackedLayoutPrivate.currentChangedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(StackedLayout.prototype, "widgetRemoved", {
+
+		get: function () {
+			return StackedLayoutPrivate.widgetRemovedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(StackedLayout.prototype, "currentWidget", {
+
+		get: function () {
+			return StackedLayoutPrivate.currentWidgetProperty.get(this);
+		},
+
+		set: function (value) {
+			StackedLayoutPrivate.currentWidgetProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
 	});
 
-	StackedPanel.prototype.onChildAdded = function (msg) {
-		msg.child.hidden = true;
-		this.node.appendChild(msg.child.node);
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgAfterAttach);
+	StackedLayout.prototype.attachChild = function (index, child) {
+		child.hide();
+		this.parent.node.appendChild(child.node);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
 	};
 
-	StackedPanel.prototype.onChildMoved = function (msg) { };
+	StackedLayout.prototype.moveChild = function (fromIndex, toIndex, child) { };
 
-	StackedPanel.prototype.onChildRemoved = function (msg) {
-		if (msg.child === this.currentWidget)
+	StackedLayout.prototype.detachChild = function (index, child) {
+		if (child === this.currentWidget)
 			this.currentWidget = null;
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgBeforeDetach);
-		this.node.removeChild(msg.child.node);
-		resetGeometry(msg.child);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
+		this.parent.node.removeChild(child.node);
+		StackedLayoutPrivate.resetGeometry(child);
+		this.widgetRemoved.emit(child);
 	};
 
-	StackedPanel.prototype.onAfterShow = function (msg) {
+	StackedLayout.prototype.onAfterShow = function (msg) {
 		_super.prototype.onAfterShow.call(this, msg);
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
+		this.parent.update();
 	};
 
-	StackedPanel.prototype.onAfterAttach = function (msg) {
+	StackedLayout.prototype.onAfterAttach = function (msg) {
 		_super.prototype.onAfterAttach.call(this, msg);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
+		this.parent.fit();
 	};
 
-	StackedPanel.prototype.onResize = function (msg) {
-		if (this.isVisible) {
-			var width = msg.width < 0 ? this.node.offsetWidth : msg.width;
-			var height = msg.height < 0 ? this.node.offsetHeight : msg.height;
-			this._layoutChildren(width, height);
+	StackedLayout.prototype.onResize = function (msg) {
+		if (this.parent.isVisible) {
+			StackedLayoutPrivate.update(this, msg.width, msg.height);
 		}
 	};
 
-	StackedPanel.prototype.onUpdateRequest = function (msg) {
-		if (this.isVisible) {
-			this._layoutChildren(this.node.offsetWidth, this.node.offsetHeight);
+	StackedLayout.prototype.onUpdateRequest = function (msg) {
+		if (this.parent.isVisible) {
+			StackedLayoutPrivate.update(this, -1, -1);
 		}
 	};
 
-	StackedPanel.prototype.onLayoutRequest = function (msg) {
-		if (this.isAttached) {
-			this._setupGeometry();
+	StackedLayout.prototype.onFitRequest = function (msg) {
+		if (this.parent.isAttached) {
+			StackedLayoutPrivate.fit(this);
 		}
 	};
+	return StackedLayout;
+})(phosphor_widget_1.PanelLayout);
+exports.StackedLayout = StackedLayout;
 
-	StackedPanel.prototype._setupGeometry = function () {
+var StackedPanelPrivate;
+(function (StackedPanelPrivate) {
+
+	StackedPanelPrivate.currentChangedSignal = new phosphor_signaling_1.Signal();
+
+	StackedPanelPrivate.widgetRemovedSignal = new phosphor_signaling_1.Signal();
+})(StackedPanelPrivate || (StackedPanelPrivate = {}));
+
+var StackedLayoutPrivate;
+(function (StackedLayoutPrivate) {
+
+	StackedLayoutPrivate.IsIE = /Trident/.test(navigator.userAgent);
+
+	StackedLayoutPrivate.currentChangedSignal = new phosphor_signaling_1.Signal();
+
+	StackedLayoutPrivate.widgetRemovedSignal = new phosphor_signaling_1.Signal();
+
+	StackedLayoutPrivate.currentWidgetProperty = new phosphor_properties_1.Property({
+		name: 'currentWidget',
+		value: null,
+		coerce: coerceCurrentWidget,
+		changed: onCurrentWidgetChanged,
+		notify: StackedLayoutPrivate.currentChangedSignal,
+	});
+
+	function resetGeometry(widget) {
+		var rect = rectProperty.get(widget);
+		var style = widget.node.style;
+		rect.top = NaN;
+		rect.left = NaN;
+		rect.width = NaN;
+		rect.height = NaN;
+		style.top = '';
+		style.left = '';
+		style.width = '';
+		style.height = '';
+	}
+	StackedLayoutPrivate.resetGeometry = resetGeometry;
+
+	function fit(layout) {
+
+		var parent = layout.parent;
+		if (!parent) {
+			return;
+		}
 
 		var minW = 0;
 		var minH = 0;
 		var maxW = Infinity;
 		var maxH = Infinity;
-		var widget = this.currentWidget;
+		var widget = layout.currentWidget;
 		if (widget) {
 			var limits = phosphor_domutil_1.sizeLimits(widget.node);
 			minW = limits.minWidth;
@@ -6333,116 +6747,113 @@ var StackedPanel = (function (_super) {
 			maxH = limits.maxHeight;
 		}
 
-		this._box = phosphor_domutil_1.boxSizing(this.node);
-		minW += this._box.horizontalSum;
-		minH += this._box.verticalSum;
-		maxW += this._box.horizontalSum;
-		maxH += this._box.verticalSum;
+		var box = phosphor_domutil_1.boxSizing(parent.node);
+		boxSizingProperty.set(parent, box);
+		minW += box.horizontalSum;
+		minH += box.verticalSum;
+		maxW += box.horizontalSum;
+		maxH += box.verticalSum;
 
-		var style = this.node.style;
+		var style = parent.node.style;
 		style.minWidth = minW + 'px';
 		style.minHeight = minH + 'px';
 		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
 		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
 
-		if (this.parent)
-			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Panel.MsgLayoutRequest);
+		if (parent.parent)
+			phosphor_messaging_1.sendMessage(parent.parent, phosphor_widget_1.Widget.MsgFitRequest);
 
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
+		phosphor_messaging_1.sendMessage(parent, phosphor_widget_1.Widget.MsgUpdateRequest);
+	}
+	StackedLayoutPrivate.fit = fit;
 
-	StackedPanel.prototype._layoutChildren = function (offsetWidth, offsetHeight) {
+	function update(layout, offsetWidth, offsetHeight) {
 
-		var widget = this.currentWidget;
+		var widget = layout.currentWidget;
 		if (!widget) {
 			return;
 		}
 
-		var box = this._box || (this._box = phosphor_domutil_1.boxSizing(this.node));
+		var parent = layout.parent;
+		if (!parent) {
+			return;
+		}
 
+		if (offsetWidth < 0) {
+			offsetWidth = parent.node.offsetWidth;
+		}
+		if (offsetHeight < 0) {
+			offsetHeight = parent.node.offsetHeight;
+		}
+
+		var box = boxSizingProperty.get(parent);
 		var top = box.paddingTop;
 		var left = box.paddingLeft;
 		var width = offsetWidth - box.horizontalSum;
 		var height = offsetHeight - box.verticalSum;
 
 		setGeometry(widget, left, top, width, height);
-	};
+	}
+	StackedLayoutPrivate.update = update;
 
-	StackedPanel.prototype._onCurrentWidgetChanged = function (old, val) {
-		if (old)
-			old.hidden = true;
-		if (val)
-			val.hidden = false;
-
-
-
-
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	StackedPanel.currentWidgetProperty = new phosphor_properties_1.Property({
-		name: 'currentWidget',
-		value: null,
-		coerce: function (owner, val) { return (val && val.parent === owner) ? val : null; },
-		changed: function (owner, old, val) { return owner._onCurrentWidgetChanged(old, val); },
-		notify: new phosphor_signaling_1.Signal(),
+	var rectProperty = new phosphor_properties_1.Property({
+		name: 'rect',
+		create: function () { return ({ top: NaN, left: NaN, width: NaN, height: NaN }); },
 	});
-	return StackedPanel;
-})(phosphor_widget_1.Panel);
-exports.StackedPanel = StackedPanel;
 
-var rectProperty = new phosphor_properties_1.Property({
-	name: 'rect',
-	create: createRect,
-});
+	var boxSizingProperty = new phosphor_properties_1.Property({
+		name: 'boxSizing',
+		create: function (owner) { return phosphor_domutil_1.boxSizing(owner.node); },
+	});
 
-function createRect() {
-	return { top: NaN, left: NaN, width: NaN, height: NaN };
-}
+	function coerceCurrentWidget(owner, value) {
+		return (value && owner.childIndex(value) !== -1) ? value : null;
+	}
 
-function getRect(widget) {
-	return rectProperty.get(widget);
-}
+	function onCurrentWidgetChanged(owner, old, val) {
+		if (old)
+			old.hide();
+		if (val)
+			val.show();
+		if (!owner.parent)
+			return;
 
-function setGeometry(widget, left, top, width, height) {
-	var resized = false;
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	if (rect.top !== top) {
-		rect.top = top;
-		style.top = top + 'px';
-	}
-	if (rect.left !== left) {
-		rect.left = left;
-		style.left = left + 'px';
-	}
-	if (rect.width !== width) {
-		resized = true;
-		rect.width = width;
-		style.width = width + 'px';
-	}
-	if (rect.height !== height) {
-		resized = true;
-		rect.height = height;
-		style.height = height + 'px';
-	}
-	if (resized) {
-		phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
-	}
-}
 
-function resetGeometry(widget) {
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	rect.top = NaN;
-	rect.left = NaN;
-	rect.width = NaN;
-	rect.height = NaN;
-	style.top = '';
-	style.left = '';
-	style.width = '';
-	style.height = '';
-}
+		if (StackedLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(owner.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			owner.parent.fit();
+		}
+	}
+
+	function setGeometry(widget, left, top, width, height) {
+		var resized = false;
+		var style = widget.node.style;
+		var rect = rectProperty.get(widget);
+		if (rect.top !== top) {
+			rect.top = top;
+			style.top = top + 'px';
+		}
+		if (rect.left !== left) {
+			rect.left = left;
+			style.left = left + 'px';
+		}
+		if (rect.width !== width) {
+			resized = true;
+			rect.width = width;
+			style.width = width + 'px';
+		}
+		if (rect.height !== height) {
+			resized = true;
+			rect.height = height;
+			style.height = height + 'px';
+		}
+		if (resized) {
+			phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
+		}
+	}
+})(StackedLayoutPrivate || (StackedLayoutPrivate = {}));
 
 },{"./index.css":31,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":40}],33:[function(require,module,exports){
 var css = ".p-TabBar{position:relative;z-index:0}.p-TabBar-header{display:none;position:absolute;top:0;left:0;right:0;z-index:0}.p-TabBar-body{position:absolute;top:0;left:0;right:0;bottom:0;z-index:2}.p-TabBar-footer{display:none;position:absolute;left:0;right:0;bottom:0;z-index:1}.p-TabBar-content{margin:0;padding:0;height:100%;display:flex;flex-direction:row;list-style-type:none}.p-Tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-Tab-close,.p-Tab-icon{flex:0 0 auto}.p-Tab-text{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging .p-Tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging .p-Tab.p-mod-dragging{transition:none}.p-TabPanel{z-index:0}.p-TabPanel>.p-TabBar{z-index:1}.p-TabPanel>.p-StackedPanel{z-index:0}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-tabs\\lib\\index.css"})); module.exports = css;
@@ -7901,10 +8312,11 @@ var PanelLayout = (function (_super) {
 
 	PanelLayout.prototype.insertChild = function (index, child) {
 		child.parent = this.parent;
+		var n = this.childCount();
 		var i = this.childIndex(child);
-		var j = Math.max(0, Math.min(index | 0, this.childCount()));
+		var j = Math.max(0, Math.min(index | 0, n));
 		if (i !== -1) {
-			if (i < j)
+			if (j === n)
 				j--;
 			if (i === j)
 				return;
@@ -8255,6 +8667,15 @@ var Widget = (function (_super) {
 		this.addClass(HIDDEN_CLASS);
 		if (this.parent) {
 			phosphor_messaging_1.sendMessage(this.parent, new ChildMessage('child-hidden', this));
+		}
+	};
+
+	Widget.prototype.setHidden = function (hidden) {
+		if (hidden) {
+			this.hide();
+		}
+		else {
+			this.show();
 		}
 	};
 
