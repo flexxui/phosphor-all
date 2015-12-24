@@ -26,7 +26,7 @@ window.phosphor.createWidget = function (name) {
 	return w;
 };
 
-},{"phosphor-boxengine":3,"phosphor-boxpanel":5,"phosphor-disposable":7,"phosphor-dockpanel":9,"phosphor-domutil":13,"phosphor-gridpanel":15,"phosphor-menus":17,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-splitpanel":29,"phosphor-stackedpanel":32,"phosphor-tabs":34,"phosphor-widget":40}],2:[function(require,module,exports){
+},{"phosphor-boxengine":3,"phosphor-boxpanel":5,"phosphor-disposable":7,"phosphor-dockpanel":9,"phosphor-domutil":13,"phosphor-gridpanel":15,"phosphor-menus":17,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-splitpanel":29,"phosphor-stackedpanel":32,"phosphor-tabs":34,"phosphor-widget":39}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -822,7 +822,7 @@ var BoxLayoutPrivate;
 	}
 })(BoxLayoutPrivate || (BoxLayoutPrivate = {}));
 
-},{"./index.css":4,"phosphor-arrays":6,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-widget":40}],6:[function(require,module,exports){
+},{"./index.css":4,"phosphor-arrays":6,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-widget":39}],6:[function(require,module,exports){
 
 'use strict';
 
@@ -1165,7 +1165,7 @@ var DisposableSet = (function () {
 exports.DisposableSet = DisposableSet;
 
 },{}],8:[function(require,module,exports){
-var css = ".p-DockPanel,.p-DockPanel>.p-DockSplitPanel,.p-DockPanel>.p-DockTabPanel{z-index:0}.p-DockPanelOverlay{box-sizing:border-box;position:absolute;top:0;left:0;width:0;height:0;z-index:1;pointer-events:none}.p-DockPanelOverlay.p-mod-hidden,.p-Tab.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-dockpanel\\lib\\index.css"})); module.exports = css;
+var css = ".p-DockPanel{position:relative;z-index:0}.p-DockPanel>.p-Widget{position:absolute;z-index:0}.p-DockPanel-overlay{box-sizing:border-box;position:absolute;top:0;left:0;width:0;height:0;z-index:1;pointer-events:none}.p-DockPanel-overlay.p-mod-hidden,.p-TabBar-tab.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-dockpanel\\lib\\index.css"})); module.exports = css;
 },{"browserify-css":2}],9:[function(require,module,exports){
 
 'use strict';
@@ -1185,15 +1185,14 @@ var phosphor_tabs_1 = require('phosphor-tabs');
 var phosphor_widget_1 = require('phosphor-widget');
 require('./index.css');
 
-var DOCK_PANEL_CLASS = 'p-DockPanel';
 
-var TAB_BAR_CLASS = 'p-DockTabBar';
+var DOCK_PANEL_CLASS = 'p-DockPanel';
 
 var TAB_PANEL_CLASS = 'p-DockTabPanel';
 
 var SPLIT_PANEL_CLASS = 'p-DockSplitPanel';
 
-var OVERLAY_CLASS = 'p-DockPanelOverlay';
+var OVERLAY_CLASS = 'p-DockPanel-overlay';
 
 var HIDDEN_CLASS = 'p-mod-hidden';
 
@@ -1224,49 +1223,51 @@ var EDGE_SIZE = 30;
 var DockPanel = (function (_super) {
 	__extends(DockPanel, _super);
 
+
+
+
+
+
 	function DockPanel() {
 		_super.call(this);
 		this.addClass(DOCK_PANEL_CLASS);
+		this.layout = new phosphor_stackedpanel_1.StackedLayout();
 	}
-
-	DockPanel.select = function (widget) {
-		selectWidget(widget);
-	};
 	Object.defineProperty(DockPanel.prototype, "spacing", {
 
 		get: function () {
-			return DockPanel.spacingProperty.get(this);
+			return DockPanelPrivate.spacingProperty.get(this);
 		},
 
 		set: function (value) {
-			DockPanel.spacingProperty.set(this, value);
+			DockPanelPrivate.spacingProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
 	});
 
 	DockPanel.prototype.insertTop = function (widget, ref) {
-		insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Vertical, false);
+		DockPanelPrivate.insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Vertical, false);
 	};
 
 	DockPanel.prototype.insertLeft = function (widget, ref) {
-		insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Horizontal, false);
+		DockPanelPrivate.insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Horizontal, false);
 	};
 
 	DockPanel.prototype.insertRight = function (widget, ref) {
-		insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Horizontal, true);
+		DockPanelPrivate.insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Horizontal, true);
 	};
 
 	DockPanel.prototype.insertBottom = function (widget, ref) {
-		insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Vertical, true);
+		DockPanelPrivate.insertSplit(this, widget, ref, phosphor_splitpanel_1.Orientation.Vertical, true);
 	};
 
 	DockPanel.prototype.insertTabBefore = function (widget, ref) {
-		insertTab(this, widget, ref, false);
+		DockPanelPrivate.insertTab(this, widget, ref, false);
 	};
 
 	DockPanel.prototype.insertTabAfter = function (widget, ref) {
-		insertTab(this, widget, ref, true);
+		DockPanelPrivate.insertTab(this, widget, ref, true);
 	};
 
 	DockPanel.prototype.handleEvent = function (event) {
@@ -1287,7 +1288,6 @@ var DockPanel = (function (_super) {
 	};
 
 	DockPanel.prototype.onAfterAttach = function (msg) {
-		_super.prototype.onAfterAttach.call(this, msg);
 		var node = this.node;
 		node.addEventListener('p-dragenter', this);
 		node.addEventListener('p-dragleave', this);
@@ -1296,7 +1296,6 @@ var DockPanel = (function (_super) {
 	};
 
 	DockPanel.prototype.onBeforeDetach = function (msg) {
-		_super.prototype.onBeforeDetach.call(this, msg);
 		var node = this.node;
 		node.removeEventListener('p-dragenter', this);
 		node.removeEventListener('p-dragleave', this);
@@ -1316,14 +1315,16 @@ var DockPanel = (function (_super) {
 		event.stopPropagation();
 		var related = event.relatedTarget;
 		if (!related || !this.node.contains(related)) {
-			hideOverlay(this);
+			DockPanelPrivate.hideOverlay(this);
 		}
 	};
 
 	DockPanel.prototype._evtDragOver = function (event) {
 		event.preventDefault();
 		event.stopPropagation();
-		var zone = showOverlay(this, event.clientX, event.clientY);
+		var x = event.clientX;
+		var y = event.clientY;
+		var zone = DockPanelPrivate.showOverlay(this, x, y);
 		if (zone === 10 ) {
 			event.dropAction = phosphor_dragdrop_1.DropAction.None;
 		}
@@ -1335,12 +1336,14 @@ var DockPanel = (function (_super) {
 	DockPanel.prototype._evtDrop = function (event) {
 		event.preventDefault();
 		event.stopPropagation();
-		hideOverlay(this);
+		DockPanelPrivate.hideOverlay(this);
 		if (event.proposedAction === phosphor_dragdrop_1.DropAction.None) {
 			event.dropAction = phosphor_dragdrop_1.DropAction.None;
 			return;
 		}
-		var target = findDockTarget(this, event.clientX, event.clientY);
+		var x = event.clientX;
+		var y = event.clientY;
+		var target = DockPanelPrivate.findDockTarget(this, x, y);
 		if (target.zone === 10 ) {
 			event.dropAction = phosphor_dragdrop_1.DropAction.None;
 			return;
@@ -1355,31 +1358,25 @@ var DockPanel = (function (_super) {
 			event.dropAction = phosphor_dragdrop_1.DropAction.None;
 			return;
 		}
-		handleDrop(this, widget, target);
+		DockPanelPrivate.handleDrop(this, widget, target);
 		event.dropAction = event.proposedAction;
 	};
-
-	DockPanel.spacingProperty = new phosphor_properties_1.Property({
-		name: 'spacing',
-		value: 3,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: onSpacingChanged,
-	});
 	return DockPanel;
-})(phosphor_stackedpanel_1.StackedPanel);
+})(phosphor_widget_1.Widget);
 exports.DockPanel = DockPanel;
 
-var DockTabBar = (function (_super) {
-	__extends(DockTabBar, _super);
+var DockTabPanel = (function (_super) {
+	__extends(DockTabPanel, _super);
 
-	function DockTabBar() {
+	function DockTabPanel() {
 		_super.call(this);
 		this._drag = null;
-		this.addClass(TAB_BAR_CLASS);
-		this.tabsMovable = true;
+		this.addClass(TAB_PANEL_CLASS);
+		this.tabBar.tabsMovable = true;
+		this.tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
 	}
 
-	DockTabBar.prototype.dispose = function () {
+	DockTabPanel.prototype.dispose = function () {
 		if (this._drag) {
 			this._drag.dispose();
 			this._drag = null;
@@ -1387,21 +1384,28 @@ var DockTabBar = (function (_super) {
 		_super.prototype.dispose.call(this);
 	};
 
-	DockTabBar.prototype.onTearOffRequest = function (msg) {
+	DockTabPanel.prototype.onWidgetRemoved = function (sender, child) {
+		_super.prototype.onWidgetRemoved.call(this, sender, child);
+		if (sender.childCount() === 0) {
+			DockPanelPrivate.removeTabPanel(this);
+		}
+	};
+
+	DockTabPanel.prototype._onTabDetachRequested = function (sender, args) {
 		var _this = this;
 
 		if (this._drag) {
 			return;
 		}
 
-		this.releaseMouse();
+		sender.releaseMouse();
 
-		var widget = msg.item;
 		var mimeData = new phosphor_dragdrop_1.MimeData();
+		var widget = this.findWidgetByTitle(args.title);
 		mimeData.setData(FACTORY_MIME, function () { return widget; });
 
-		var tabNode = msg.node;
-		var dragImage = tabNode.cloneNode(true);
+		var tab = args.node;
+		var dragImage = tab.cloneNode(true);
 
 		this._drag = new phosphor_dragdrop_1.Drag({
 			mimeData: mimeData,
@@ -1410,31 +1414,11 @@ var DockTabBar = (function (_super) {
 			supportedActions: phosphor_dragdrop_1.DropActions.Move,
 		});
 
-		tabNode.classList.add(HIDDEN_CLASS);
-		this._drag.start(msg.clientX, msg.clientY).then(function () {
+		tab.classList.add(HIDDEN_CLASS);
+		this._drag.start(args.clientX, args.clientY).then(function () {
 			_this._drag = null;
-			tabNode.classList.remove(HIDDEN_CLASS);
+			tab.classList.remove(HIDDEN_CLASS);
 		});
-	};
-	return DockTabBar;
-})(phosphor_tabs_1.TabBar);
-
-var DockTabPanel = (function (_super) {
-	__extends(DockTabPanel, _super);
-
-	function DockTabPanel() {
-		_super.call(this);
-		this.addClass(TAB_PANEL_CLASS);
-		this.widgets.changed.connect(this._onWidgetsChanged, this);
-	}
-
-	DockTabPanel.createTabBar = function () {
-		return new DockTabBar();
-	};
-
-	DockTabPanel.prototype._onWidgetsChanged = function () {
-		if (this.widgets.length === 0)
-			removeTabPanel(this);
 	};
 	return DockTabPanel;
 })(phosphor_tabs_1.TabPanel);
@@ -1504,624 +1488,640 @@ var DockPanelOverlay = (function (_super) {
 	return DockPanelOverlay;
 })(phosphor_nodewrapper_1.NodeWrapper);
 
-var rootProperty = new phosphor_properties_1.Property({
-	name: 'root',
-	value: null,
-	changed: onRootChanged,
-});
+var DockPanelPrivate;
+(function (DockPanelPrivate) {
 
-var overlayProperty = new phosphor_properties_1.Property({
-	name: 'overlay',
-	create: createOverlay,
-});
+	DockPanelPrivate.spacingProperty = new phosphor_properties_1.Property({
+		name: 'spacing',
+		value: 3,
+		coerce: function (owner, value) { return Math.max(0, value | 0); },
+		changed: onSpacingChanged,
+	});
 
-function getRoot(panel) {
-	return rootProperty.get(panel);
-}
+	function insertSplit(owner, widget, ref, orientation, after) {
 
-function setRoot(panel, root) {
-	rootProperty.set(panel, root);
-}
+		validateInsertArgs(owner, widget, ref);
 
-function onRootChanged(panel, old, root) {
-	if (!root)
-		return;
-	root.parent = panel;
-	panel.currentWidget = root;
-}
-
-function getOverlay(panel) {
-	return overlayProperty.get(panel);
-}
-
-function createOverlay(panel) {
-	var overlay = new DockPanelOverlay();
-	panel.node.appendChild(overlay.node);
-	return overlay;
-}
-
-function onSpacingChanged(panel, old, spacing) {
-	var root = getRoot(panel);
-	if (root instanceof DockSplitPanel) {
-		updateSpacing(root, spacing);
-	}
-}
-
-function updateSpacing(panel, spacing) {
-	var children = panel.children;
-	for (var i = 0, n = children.length; i < n; ++i) {
-		var child = children.get(i);
-		if (child instanceof DockSplitPanel) {
-			updateSpacing(child, spacing);
+		if (widget === ref) {
+			return;
 		}
-	}
-	panel.spacing = spacing;
-}
 
-function internalError() {
-	throw new Error('Internal DockPanel Error.');
-}
 
-function dockPanelContains(panel, widget) {
-	var stack = widget.parent;
-	if (!stack) {
-		return false;
-	}
-	var tabs = stack.parent;
-	if (!(tabs instanceof DockTabPanel)) {
-		return false;
-	}
-	var parent = tabs.parent;
-	while (parent) {
-		if (parent === panel) {
-			return true;
+
+		widget.parent = null;
+
+		var tabPanel = new DockTabPanel();
+		tabPanel.addChild(widget);
+
+		if (!getRoot(owner)) {
+			setRoot(owner, tabPanel);
+			return;
 		}
-		if (!(parent instanceof DockSplitPanel)) {
-			return false;
-		}
-		parent = parent.parent;
-	}
-	return false;
-}
 
-function findTabPanel(widget) {
-	var stack = widget.parent;
-	if (!stack) {
-		internalError();
-	}
-	var tabs = stack.parent;
-	if (!(tabs instanceof DockTabPanel)) {
-		internalError();
-	}
-	return tabs;
-}
-
-function findFirstTabPanel(panel) {
-	var root = getRoot(panel);
-	while (root) {
-		if (root instanceof DockTabPanel) {
-			return root;
+		if (!ref) {
+			var root = ensureSplitRoot(owner, orientation);
+			var sizes_1 = root.sizes();
+			var count = sizes_1.length;
+			arrays.insert(sizes_1, after ? count : 0, 0.5);
+			root.insertChild(after ? count : 0, tabPanel);
+			root.setSizes(sizes_1);
+			return;
 		}
-		if (!(root instanceof DockSplitPanel) || root.children.length === 0) {
+
+		var refTabPanel = findTabPanel(ref);
+
+		if (refTabPanel.parent === owner) {
+			var root = ensureSplitRoot(owner, orientation);
+			root.insertChild(after ? 1 : 0, tabPanel);
+			root.setSizes([1, 1]);
+			return;
+		}
+
+		if (!(refTabPanel.parent instanceof DockSplitPanel)) {
 			internalError();
 		}
-		root = root.children.get(0);
-	}
-	return null;
-}
 
-function ensureFirstTabPanel(panel) {
-	var tabs = findFirstTabPanel(panel);
-	if (!tabs) {
-		tabs = new DockTabPanel();
-		setRoot(panel, tabs);
-	}
-	return tabs;
-}
+		var splitPanel = refTabPanel.parent;
 
-function ensureSplitRoot(panel, orientation) {
-	var oldRoot = getRoot(panel);
-	if (!oldRoot) {
-		internalError();
-	}
-	if (oldRoot instanceof DockSplitPanel) {
-		if (oldRoot.orientation === orientation) {
-			return oldRoot;
+
+		if (splitPanel.orientation === orientation) {
+			var i_1 = splitPanel.childIndex(refTabPanel);
+			var sizes_2 = splitPanel.sizes();
+			var size = sizes_2[i_1] = sizes_2[i_1] / 2;
+			arrays.insert(sizes_2, after ? i_1 + 1 : i_1, size);
+			splitPanel.insertChild(after ? i_1 + 1 : i_1, tabPanel);
+			splitPanel.setSizes(sizes_2);
+			return;
 		}
-		if (oldRoot.children.length <= 1) {
-			oldRoot.orientation = orientation;
-			return oldRoot;
+
+
+		if (splitPanel.childCount() === 1) {
+			splitPanel.orientation = orientation;
+			splitPanel.insertChild(after ? 1 : 0, tabPanel);
+			splitPanel.setSizes([1, 1]);
+			return;
 		}
+
+		if (splitPanel.childCount() === 0) {
+			internalError();
+		}
+
+
+
+		var sizes = splitPanel.sizes();
+		var i = splitPanel.childIndex(refTabPanel);
+		var childSplit = new DockSplitPanel(orientation, owner.spacing);
+		childSplit.addChild(refTabPanel);
+		childSplit.insertChild(after ? 1 : 0, tabPanel);
+		splitPanel.insertChild(i, childSplit);
+		splitPanel.setSizes(sizes);
+		childSplit.setSizes([1, 1]);
 	}
-	var newRoot = new DockSplitPanel(orientation, panel.spacing);
-	newRoot.children.add(oldRoot);
-	setRoot(panel, newRoot);
-	oldRoot.hidden = false;
-	return newRoot;
-}
+	DockPanelPrivate.insertSplit = insertSplit;
 
-function selectWidget(widget) {
-	var stack = widget.parent;
-	if (!stack) {
-		return;
+	function insertTab(owner, widget, ref, after) {
+
+		validateInsertArgs(owner, widget, ref);
+
+		if (widget === ref) {
+			return;
+		}
+
+
+
+		widget.parent = null;
+
+		var index;
+		var tabPanel;
+		if (ref) {
+			tabPanel = findTabPanel(ref);
+			index = tabPanel.childIndex(ref) + (after ? 1 : 0);
+		}
+		else {
+			tabPanel = ensureFirstTabPanel(owner);
+			index = after ? tabPanel.childCount() : 0;
+		}
+
+		tabPanel.insertChild(index, widget);
 	}
-	var tabs = stack.parent;
-	if (!(tabs instanceof DockTabPanel)) {
-		return;
-	}
-	tabs.currentWidget = widget;
-}
+	DockPanelPrivate.insertTab = insertTab;
 
-function validateInsertArgs(panel, widget, ref) {
-	if (!widget) {
-		throw new Error('Target widget is null.');
-	}
-	if (ref && !dockPanelContains(panel, ref)) {
-		throw new Error('Reference widget not contained by the dock panel.');
-	}
-}
+	function removeTabPanel(tabPanel) {
 
-function insertSplit(panel, widget, ref, orientation, after) {
+		if (tabPanel.childCount() !== 0) {
+			internalError();
+		}
 
-	validateInsertArgs(panel, widget, ref);
+		if (tabPanel.parent instanceof DockPanel) {
+			setRoot(tabPanel.parent, null);
+			tabPanel.dispose();
+			return;
+		}
 
-	if (widget === ref) {
-		return;
-	}
+		if (!(tabPanel.parent instanceof DockSplitPanel)) {
+			internalError();
+		}
 
+		var splitPanel = tabPanel.parent;
 
+		if (splitPanel.childCount() < 2) {
+			internalError();
+		}
 
-	widget.parent = null;
-
-	var tabPanel = new DockTabPanel();
-	tabPanel.widgets.add(widget);
-
-	if (!getRoot(panel)) {
-		setRoot(panel, tabPanel);
-		return;
-	}
-
-	if (!ref) {
-		var root = ensureSplitRoot(panel, orientation);
-		var sizes_1 = root.sizes();
-		var count = sizes_1.length;
-		arrays.insert(sizes_1, after ? count : 0, 0.5);
-		root.children.insert(after ? count : 0, tabPanel);
-		root.setSizes(sizes_1);
-		return;
-	}
-
-	var refTabPanel = findTabPanel(ref);
-
-	if (refTabPanel.parent === panel) {
-		var root = ensureSplitRoot(panel, orientation);
-		root.children.insert(after ? 1 : 0, tabPanel);
-		root.setSizes([1, 1]);
-		return;
-	}
-
-	if (!(refTabPanel.parent instanceof DockSplitPanel)) {
-		internalError();
-	}
-
-	var splitPanel = refTabPanel.parent;
-
-
-	if (splitPanel.orientation === orientation) {
-		var i_1 = splitPanel.children.indexOf(refTabPanel);
-		var sizes_2 = splitPanel.sizes();
-		var size = sizes_2[i_1] = sizes_2[i_1] / 2;
-		arrays.insert(sizes_2, after ? i_1 + 1 : i_1, size);
-		splitPanel.children.insert(after ? i_1 + 1 : i_1, tabPanel);
-		splitPanel.setSizes(sizes_2);
-		return;
-	}
-
-
-	if (splitPanel.children.length === 1) {
-		splitPanel.orientation = orientation;
-		splitPanel.children.insert(after ? 1 : 0, tabPanel);
-		splitPanel.setSizes([1, 1]);
-		return;
-	}
-
-	if (splitPanel.children.length === 0) {
-		internalError();
-	}
-
-
-
-	var sizes = splitPanel.sizes();
-	var i = splitPanel.children.indexOf(refTabPanel);
-	var childSplit = new DockSplitPanel(orientation, panel.spacing);
-	childSplit.children.add(refTabPanel);
-	childSplit.children.insert(after ? 1 : 0, tabPanel);
-	splitPanel.children.insert(i, childSplit);
-	splitPanel.setSizes(sizes);
-	childSplit.setSizes([1, 1]);
-}
-
-function insertTab(panel, widget, ref, after) {
-
-	validateInsertArgs(panel, widget, ref);
-
-	if (widget === ref) {
-		return;
-	}
-
-
-
-	widget.parent = null;
-
-	var index;
-	var tabPanel;
-	if (ref) {
-		tabPanel = findTabPanel(ref);
-		index = tabPanel.widgets.indexOf(ref) + (after ? 1 : 0);
-	}
-	else {
-		tabPanel = ensureFirstTabPanel(panel);
-		index = after ? tabPanel.widgets.length : 0;
-	}
-
-	tabPanel.widgets.insert(index, widget);
-}
-
-function removeTabPanel(tabPanel) {
-
-	if (tabPanel.widgets.length !== 0) {
-		internalError();
-	}
-
-	if (tabPanel.parent instanceof DockPanel) {
-		setRoot(tabPanel.parent, null);
 		tabPanel.dispose();
-		return;
-	}
-
-	if (!(tabPanel.parent instanceof DockSplitPanel)) {
-		internalError();
-	}
-
-	var splitPanel = tabPanel.parent;
-
-	if (splitPanel.children.length < 2) {
-		internalError();
-	}
-
-	tabPanel.dispose();
 
 
-	if (splitPanel.children.length > 1) {
-		return;
-	}
+		if (splitPanel.childCount() > 1) {
+			return;
+		}
 
-	var child = splitPanel.children.get(0);
+		var child = splitPanel.childAt(0);
 
-	if (!(child instanceof DockTabPanel) && !(child instanceof DockSplitPanel)) {
-		internalError();
-	}
+		if (!(child instanceof DockTabPanel) && !(child instanceof DockSplitPanel)) {
+			internalError();
+		}
 
-	if (splitPanel.parent instanceof DockPanel) {
-		setRoot(splitPanel.parent, child);
+		if (splitPanel.parent instanceof DockPanel) {
+			setRoot(splitPanel.parent, child);
+			splitPanel.dispose();
+			return;
+		}
+
+		if (!(splitPanel.parent instanceof DockSplitPanel)) {
+			internalError();
+		}
+
+		var grandPanel = splitPanel.parent;
+
+		if (child instanceof DockTabPanel) {
+			var sizes = grandPanel.sizes();
+			var index_1 = grandPanel.childIndex(splitPanel);
+			splitPanel.parent = null;
+			grandPanel.insertChild(index_1, child);
+			grandPanel.setSizes(sizes);
+			splitPanel.dispose();
+			return;
+		}
+
+		var childSplit = child;
+
+
+		if (childSplit.orientation !== grandPanel.orientation) {
+			internalError();
+		}
+
+
+		var index = grandPanel.childIndex(splitPanel);
+		var childSizes = childSplit.sizes();
+		var grandSizes = grandPanel.sizes();
+
+		splitPanel.parent = null;
+		var sizeShare = arrays.removeAt(grandSizes, index);
+
+		for (var i = 0; childSplit.childCount() !== 0; ++i) {
+			grandPanel.insertChild(index + i, childSplit.childAt(0));
+			arrays.insert(grandSizes, index + i, sizeShare * childSizes[i]);
+		}
+
+		grandPanel.setSizes(grandSizes);
 		splitPanel.dispose();
-		return;
 	}
+	DockPanelPrivate.removeTabPanel = removeTabPanel;
 
-	if (!(splitPanel.parent instanceof DockSplitPanel)) {
-		internalError();
+	function hideOverlay(owner) {
+		getOverlay(owner).hide();
 	}
+	DockPanelPrivate.hideOverlay = hideOverlay;
 
-	var grandPanel = splitPanel.parent;
+	function showOverlay(owner, clientX, clientY) {
 
-	if (child instanceof DockTabPanel) {
-		var sizes = grandPanel.sizes();
-		var index_1 = grandPanel.children.indexOf(splitPanel);
-		grandPanel.children.set(index_1, child);
-		grandPanel.setSizes(sizes);
-		splitPanel.dispose();
-		return;
-	}
+		var target = findDockTarget(owner, clientX, clientY);
 
-	var childSplit = child;
-
-
-	if (childSplit.orientation !== grandPanel.orientation) {
-		internalError();
-	}
-
-
-	var childSizes = childSplit.sizes();
-	var grandSizes = grandPanel.sizes();
-	var childChildren = childSplit.children;
-	var grandChildren = grandPanel.children;
-
-	var index = grandChildren.indexOf(splitPanel);
-	var sizeShare = arrays.removeAt(grandSizes, index);
-	splitPanel.parent = null;
-
-	for (var i = 0; childChildren.length !== 0; ++i) {
-		grandChildren.insert(index + i, childChildren.get(0));
-		arrays.insert(grandSizes, index + i, sizeShare * childSizes[i]);
-	}
-
-	grandPanel.setSizes(grandSizes);
-	splitPanel.dispose();
-}
-
-function iterTabPanels(root, callback) {
-	if (root instanceof DockTabPanel) {
-		return callback(root);
-	}
-	if (!(root instanceof DockSplitPanel)) {
-		internalError();
-	}
-	var children = root.children;
-	for (var i = 0; i < children.length; ++i) {
-		var child = children.get(i);
-		var result = iterTabPanels(child, callback);
-		if (result !== void 0)
-			return result;
-	}
-	return void 0;
-}
-
-function getEdgeZone(node, x, y) {
-	var zone;
-	var rect = node.getBoundingClientRect();
-	if (x < rect.left + EDGE_SIZE) {
-		if (y - rect.top < x - rect.left) {
-			zone = 0 ;
+		if (target.zone === 10 ) {
+			hideOverlay(owner);
+			return target.zone;
 		}
-		else if (rect.bottom - y < x - rect.left) {
-			zone = 3 ;
-		}
-		else {
-			zone = 1 ;
-		}
-	}
-	else if (x >= rect.right - EDGE_SIZE) {
-		if (y - rect.top < rect.right - x) {
-			zone = 0 ;
-		}
-		else if (rect.bottom - y < rect.right - x) {
-			zone = 3 ;
-		}
-		else {
-			zone = 2 ;
-		}
-	}
-	else if (y < rect.top + EDGE_SIZE) {
-		zone = 0 ;
-	}
-	else if (y >= rect.bottom - EDGE_SIZE) {
-		zone = 3 ;
-	}
-	else {
-		zone = 10 ;
-	}
-	return zone;
-}
 
-function getPanelZone(node, x, y) {
-	var zone;
-	var rect = node.getBoundingClientRect();
-	var fracX = (x - rect.left) / rect.width;
-	var fracY = (y - rect.top) / rect.height;
-	if (fracX < 1 / 3) {
-		if (fracY < fracX) {
-			zone = 5 ;
-		}
-		else if (1 - fracY < fracX) {
-			zone = 8 ;
-		}
-		else {
-			zone = 6 ;
-		}
-	}
-	else if (fracX < 2 / 3) {
-		if (fracY < 1 / 3) {
-			zone = 5 ;
-		}
-		else if (fracY < 2 / 3) {
-			zone = 9 ;
-		}
-		else {
-			zone = 8 ;
-		}
-	}
-	else {
-		if (fracY < 1 - fracX) {
-			zone = 5 ;
-		}
-		else if (fracY > fracX) {
-			zone = 8 ;
-		}
-		else {
-			zone = 7 ;
-		}
-	}
-	return zone;
-}
+		var top;
+		var left;
+		var width;
+		var height;
+		var pcr;
+		var box = phosphor_domutil_1.boxSizing(owner.node);
+		var rect = owner.node.getBoundingClientRect();
 
-function findDockTarget(panel, clientX, clientY) {
-	var root = getRoot(panel);
-	if (!root) {
-		return { zone: 4 , panel: null };
-	}
-	if (!phosphor_domutil_1.hitTest(root.node, clientX, clientY)) {
-		return { zone: 10 , panel: null };
-	}
-	var edgeZone = getEdgeZone(root.node, clientX, clientY);
-	if (edgeZone !== 10 ) {
-		return { zone: edgeZone, panel: null };
-	}
-	var hitPanel = iterTabPanels(root, function (tabs) {
-		return phosphor_domutil_1.hitTest(tabs.node, clientX, clientY) ? tabs : void 0;
-	});
-	if (!hitPanel) {
-		return { zone: 10 , panel: null };
-	}
-	var panelZone = getPanelZone(hitPanel.node, clientX, clientY);
-	return { zone: panelZone, panel: hitPanel };
-}
+		switch (target.zone) {
+			case 0 :
+				top = box.paddingTop;
+				left = box.paddingLeft;
+				width = rect.width - box.horizontalSum;
+				height = (rect.height - box.verticalSum) / 3;
+				break;
+			case 1 :
+				top = box.paddingTop;
+				left = box.paddingLeft;
+				width = (rect.width - box.horizontalSum) / 3;
+				height = rect.height - box.verticalSum;
+				break;
+			case 2 :
+				top = box.paddingTop;
+				width = (rect.width - box.horizontalSum) / 3;
+				left = box.paddingLeft + 2 * width;
+				height = rect.height - box.verticalSum;
+				break;
+			case 3 :
+				height = (rect.height - box.verticalSum) / 3;
+				top = box.paddingTop + 2 * height;
+				left = box.paddingLeft;
+				width = rect.width - box.horizontalSum;
+				break;
+			case 4 :
+				top = box.paddingTop;
+				left = box.paddingLeft;
+				width = rect.width - box.horizontalSum;
+				height = rect.height - box.verticalSum;
+				break;
+			case 5 :
+				pcr = target.panel.node.getBoundingClientRect();
+				top = pcr.top - rect.top - box.borderTop;
+				left = pcr.left - rect.left - box.borderLeft;
+				width = pcr.width;
+				height = pcr.height / 2;
+				break;
+			case 6 :
+				pcr = target.panel.node.getBoundingClientRect();
+				top = pcr.top - rect.top - box.borderTop;
+				left = pcr.left - rect.left - box.borderLeft;
+				width = pcr.width / 2;
+				height = pcr.height;
+				break;
+			case 7 :
+				pcr = target.panel.node.getBoundingClientRect();
+				top = pcr.top - rect.top - box.borderTop;
+				left = pcr.left - rect.left - box.borderLeft + pcr.width / 2;
+				width = pcr.width / 2;
+				height = pcr.height;
+				break;
+			case 8 :
+				pcr = target.panel.node.getBoundingClientRect();
+				top = pcr.top - rect.top - box.borderTop + pcr.height / 2;
+				left = pcr.left - rect.left - box.borderLeft;
+				width = pcr.width;
+				height = pcr.height / 2;
+				break;
+			case 9 :
+				pcr = target.panel.node.getBoundingClientRect();
+				top = pcr.top - rect.top - box.borderTop;
+				left = pcr.left - rect.left - box.borderLeft;
+				width = pcr.width;
+				height = pcr.height;
+				break;
+		}
 
-function hideOverlay(panel) {
-	getOverlay(panel).hide();
-}
-
-function showOverlay(panel, clientX, clientY) {
-
-	var target = findDockTarget(panel, clientX, clientY);
-
-	if (target.zone === 10 ) {
-		getOverlay(panel).hide();
+		getOverlay(owner).show(target.zone, left, top, width, height);
 		return target.zone;
 	}
+	DockPanelPrivate.showOverlay = showOverlay;
 
-	var top;
-	var left;
-	var width;
-	var height;
-	var pcr;
-	var box = phosphor_domutil_1.boxSizing(panel.node);
-	var rect = panel.node.getBoundingClientRect();
+	function findDockTarget(owner, clientX, clientY) {
+		var root = getRoot(owner);
+		if (!root) {
+			return { zone: 4 , panel: null };
+		}
+		if (!phosphor_domutil_1.hitTest(root.node, clientX, clientY)) {
+			return { zone: 10 , panel: null };
+		}
+		var edgeZone = getEdgeZone(root.node, clientX, clientY);
+		if (edgeZone !== 10 ) {
+			return { zone: edgeZone, panel: null };
+		}
+		var hitPanel = iterTabPanels(root, function (tabs) {
+			return phosphor_domutil_1.hitTest(tabs.node, clientX, clientY) ? tabs : void 0;
+		});
+		if (!hitPanel) {
+			return { zone: 10 , panel: null };
+		}
+		var panelZone = getPanelZone(hitPanel.node, clientX, clientY);
+		return { zone: panelZone, panel: hitPanel };
+	}
+	DockPanelPrivate.findDockTarget = findDockTarget;
 
-	switch (target.zone) {
-		case 0 :
-			top = box.paddingTop;
-			left = box.paddingLeft;
-			width = rect.width - box.horizontalSum;
-			height = (rect.height - box.verticalSum) / 3;
-			break;
-		case 1 :
-			top = box.paddingTop;
-			left = box.paddingLeft;
-			width = (rect.width - box.horizontalSum) / 3;
-			height = rect.height - box.verticalSum;
-			break;
-		case 2 :
-			top = box.paddingTop;
-			width = (rect.width - box.horizontalSum) / 3;
-			left = box.paddingLeft + 2 * width;
-			height = rect.height - box.verticalSum;
-			break;
-		case 3 :
-			height = (rect.height - box.verticalSum) / 3;
-			top = box.paddingTop + 2 * height;
-			left = box.paddingLeft;
-			width = rect.width - box.horizontalSum;
-			break;
-		case 4 :
-			top = box.paddingTop;
-			left = box.paddingLeft;
-			width = rect.width - box.horizontalSum;
-			height = rect.height - box.verticalSum;
-			break;
-		case 5 :
-			pcr = target.panel.node.getBoundingClientRect();
-			top = pcr.top - rect.top - box.borderTop;
-			left = pcr.left - rect.left - box.borderLeft;
-			width = pcr.width;
-			height = pcr.height / 2;
-			break;
-		case 6 :
-			pcr = target.panel.node.getBoundingClientRect();
-			top = pcr.top - rect.top - box.borderTop;
-			left = pcr.left - rect.left - box.borderLeft;
-			width = pcr.width / 2;
-			height = pcr.height;
-			break;
-		case 7 :
-			pcr = target.panel.node.getBoundingClientRect();
-			top = pcr.top - rect.top - box.borderTop;
-			left = pcr.left - rect.left - box.borderLeft + pcr.width / 2;
-			width = pcr.width / 2;
-			height = pcr.height;
-			break;
-		case 8 :
-			pcr = target.panel.node.getBoundingClientRect();
-			top = pcr.top - rect.top - box.borderTop + pcr.height / 2;
-			left = pcr.left - rect.left - box.borderLeft;
-			width = pcr.width;
-			height = pcr.height / 2;
-			break;
-		case 9 :
-			pcr = target.panel.node.getBoundingClientRect();
-			top = pcr.top - rect.top - box.borderTop;
-			left = pcr.left - rect.left - box.borderLeft;
-			width = pcr.width;
-			height = pcr.height;
-			break;
+	function handleDrop(owner, widget, target) {
+
+		if (target.zone === 10 ) {
+			return;
+		}
+
+		switch (target.zone) {
+			case 0 :
+				owner.insertTop(widget);
+				return;
+			case 1 :
+				owner.insertLeft(widget);
+				return;
+			case 2 :
+				owner.insertRight(widget);
+				return;
+			case 3 :
+				owner.insertBottom(widget);
+				return;
+			case 4 :
+				owner.insertLeft(widget);
+				return;
+		}
+
+
+		if (target.zone === 9 ) {
+			if (target.panel.childIndex(widget) !== -1) {
+				return;
+			}
+		}
+
+		if (target.panel.childCount() === 1) {
+			if (target.panel.childAt(0) === widget) {
+				return;
+			}
+		}
+
+		var n = target.panel.childCount();
+		var ref = target.panel.childAt(n - 1);
+		if (ref === widget) {
+			ref = target.panel.childAt(n - 2);
+		}
+
+		switch (target.zone) {
+			case 5 :
+				owner.insertTop(widget, ref);
+				return;
+			case 6 :
+				owner.insertLeft(widget, ref);
+				return;
+			case 7 :
+				owner.insertRight(widget, ref);
+				return;
+			case 8 :
+				owner.insertBottom(widget, ref);
+				return;
+			case 9 :
+				owner.insertTabAfter(widget, ref);
+				selectWidget(widget);
+				return;
+		}
+	}
+	DockPanelPrivate.handleDrop = handleDrop;
+
+	var rootProperty = new phosphor_properties_1.Property({
+		name: 'root',
+		value: null,
+		changed: onRootChanged,
+	});
+
+	var overlayProperty = new phosphor_properties_1.Property({
+		name: 'overlay',
+		create: createOverlay,
+	});
+
+	function getRoot(owner) {
+		return rootProperty.get(owner);
 	}
 
-	getOverlay(panel).show(target.zone, left, top, width, height);
-	return target.zone;
-}
-
-function handleDrop(panel, widget, target) {
-
-	if (target.zone === 10 ) {
-		return;
+	function setRoot(owner, root) {
+		rootProperty.set(owner, root);
 	}
 
-	switch (target.zone) {
-		case 0 :
-			panel.insertTop(widget);
-			return;
-		case 1 :
-			panel.insertLeft(widget);
-			return;
-		case 2 :
-			panel.insertRight(widget);
-			return;
-		case 3 :
-			panel.insertBottom(widget);
-			return;
-		case 4 :
-			panel.insertLeft(widget);
-			return;
+	function getOverlay(owner) {
+		return overlayProperty.get(owner);
 	}
 
-
-	if (target.zone === 9 ) {
-		if (target.panel.widgets.contains(widget)) {
+	function onRootChanged(owner, old, root) {
+		if (!root)
 			return;
+		var layout = owner.layout;
+		layout.addChild(root);
+		layout.currentWidget = root;
+	}
+
+	function createOverlay(owner) {
+		var overlay = new DockPanelOverlay();
+		owner.node.appendChild(overlay.node);
+		return overlay;
+	}
+
+	function onSpacingChanged(owner, old, spacing) {
+		var root = getRoot(owner);
+		if (root instanceof DockSplitPanel) {
+			updateSpacing(root, spacing);
 		}
 	}
 
-	if (target.panel.widgets.length === 1) {
-		if (target.panel.widgets.get(0) === widget) {
+	function updateSpacing(panel, spacing) {
+		for (var i = 0, n = panel.childCount(); i < n; ++i) {
+			var child = panel.childAt(i);
+			if (child instanceof DockSplitPanel) {
+				updateSpacing(child, spacing);
+			}
+		}
+		panel.spacing = spacing;
+	}
+
+	function internalError() {
+		throw new Error('Internal DockPanel Error.');
+	}
+
+	function dockPanelContains(owner, widget) {
+		var stack = widget.parent;
+		if (!stack) {
+			return false;
+		}
+		var tabs = stack.parent;
+		if (!(tabs instanceof DockTabPanel)) {
+			return false;
+		}
+		var parent = tabs.parent;
+		while (parent) {
+			if (parent === owner) {
+				return true;
+			}
+			if (!(parent instanceof DockSplitPanel)) {
+				return false;
+			}
+			parent = parent.parent;
+		}
+		return false;
+	}
+
+	function findTabPanel(widget) {
+		var stack = widget.parent;
+		if (!stack) {
+			internalError();
+		}
+		var tabs = stack.parent;
+		if (!(tabs instanceof DockTabPanel)) {
+			internalError();
+		}
+		return tabs;
+	}
+
+	function findFirstTabPanel(owner) {
+		var root = getRoot(owner);
+		while (root) {
+			if (root instanceof DockTabPanel) {
+				return root;
+			}
+			if (!(root instanceof DockSplitPanel) || root.childCount() === 0) {
+				internalError();
+			}
+			root = root.childAt(0);
+		}
+		return null;
+	}
+
+	function ensureFirstTabPanel(owner) {
+		var tabs = findFirstTabPanel(owner);
+		if (!tabs) {
+			tabs = new DockTabPanel();
+			setRoot(owner, tabs);
+		}
+		return tabs;
+	}
+
+	function ensureSplitRoot(owner, orientation) {
+		var oldRoot = getRoot(owner);
+		if (!oldRoot) {
+			internalError();
+		}
+		if (oldRoot instanceof DockSplitPanel) {
+			if (oldRoot.orientation === orientation) {
+				return oldRoot;
+			}
+			if (oldRoot.childCount() <= 1) {
+				oldRoot.orientation = orientation;
+				return oldRoot;
+			}
+		}
+		var newRoot = new DockSplitPanel(orientation, owner.spacing);
+		newRoot.addChild(oldRoot);
+		setRoot(owner, newRoot);
+		oldRoot.show();
+		return newRoot;
+	}
+
+	function selectWidget(widget) {
+		var stack = widget.parent;
+		if (!stack) {
 			return;
+		}
+		var tabs = stack.parent;
+		if (tabs instanceof DockTabPanel) {
+			tabs.currentWidget = widget;
 		}
 	}
 
-	var ref = target.panel.widgets.get(-1);
-	if (ref === widget) {
-		ref = target.panel.widgets.get(-2);
+	function validateInsertArgs(owner, widget, ref) {
+		if (!widget) {
+			throw new Error('Target widget is null.');
+		}
+		if (ref && !dockPanelContains(owner, ref)) {
+			throw new Error('Reference widget not contained by the dock panel.');
+		}
 	}
 
-	switch (target.zone) {
-		case 5 :
-			panel.insertTop(widget, ref);
-			return;
-		case 6 :
-			panel.insertLeft(widget, ref);
-			return;
-		case 7 :
-			panel.insertRight(widget, ref);
-			return;
-		case 8 :
-			panel.insertBottom(widget, ref);
-			return;
-		case 9 :
-			panel.insertTabAfter(widget, ref);
-			selectWidget(widget);
-			return;
+	function iterTabPanels(root, callback) {
+		if (root instanceof DockTabPanel) {
+			return callback(root);
+		}
+		if (!(root instanceof DockSplitPanel)) {
+			internalError();
+		}
+		for (var i = 0; i < root.childCount(); ++i) {
+			var child = root.childAt(i);
+			var result = iterTabPanels(child, callback);
+			if (result !== void 0)
+				return result;
+		}
+		return void 0;
 	}
-}
 
-},{"./index.css":8,"phosphor-arrays":10,"phosphor-domutil":13,"phosphor-dragdrop":11,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-splitpanel":29,"phosphor-stackedpanel":32,"phosphor-tabs":34,"phosphor-widget":40}],10:[function(require,module,exports){
+	function getEdgeZone(node, x, y) {
+		var zone;
+		var rect = node.getBoundingClientRect();
+		if (x < rect.left + EDGE_SIZE) {
+			if (y - rect.top < x - rect.left) {
+				zone = 0 ;
+			}
+			else if (rect.bottom - y < x - rect.left) {
+				zone = 3 ;
+			}
+			else {
+				zone = 1 ;
+			}
+		}
+		else if (x >= rect.right - EDGE_SIZE) {
+			if (y - rect.top < rect.right - x) {
+				zone = 0 ;
+			}
+			else if (rect.bottom - y < rect.right - x) {
+				zone = 3 ;
+			}
+			else {
+				zone = 2 ;
+			}
+		}
+		else if (y < rect.top + EDGE_SIZE) {
+			zone = 0 ;
+		}
+		else if (y >= rect.bottom - EDGE_SIZE) {
+			zone = 3 ;
+		}
+		else {
+			zone = 10 ;
+		}
+		return zone;
+	}
+
+	function getPanelZone(node, x, y) {
+		var zone;
+		var rect = node.getBoundingClientRect();
+		var fracX = (x - rect.left) / rect.width;
+		var fracY = (y - rect.top) / rect.height;
+		if (fracX < 1 / 3) {
+			if (fracY < fracX) {
+				zone = 5 ;
+			}
+			else if (1 - fracY < fracX) {
+				zone = 8 ;
+			}
+			else {
+				zone = 6 ;
+			}
+		}
+		else if (fracX < 2 / 3) {
+			if (fracY < 1 / 3) {
+				zone = 5 ;
+			}
+			else if (fracY < 2 / 3) {
+				zone = 9 ;
+			}
+			else {
+				zone = 8 ;
+			}
+		}
+		else {
+			if (fracY < 1 - fracX) {
+				zone = 5 ;
+			}
+			else if (fracY > fracX) {
+				zone = 8 ;
+			}
+			else {
+				zone = 7 ;
+			}
+		}
+		return zone;
+	}
+})(DockPanelPrivate || (DockPanelPrivate = {}));
+
+},{"./index.css":8,"phosphor-arrays":10,"phosphor-domutil":13,"phosphor-dragdrop":11,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-splitpanel":29,"phosphor-stackedpanel":32,"phosphor-tabs":34,"phosphor-widget":39}],10:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"dup":6}],11:[function(require,module,exports){
 
@@ -3264,7 +3264,7 @@ function makeSizer(spec) {
 	return sizer;
 }
 
-},{"./index.css":14,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":40}],16:[function(require,module,exports){
+},{"./index.css":14,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":39}],16:[function(require,module,exports){
 var css = ".p-MenuBar-content{margin:0;padding:0;display:flex;flex-direction:row;list-style-type:none}.p-MenuBar-item{box-sizing:border-box}.p-MenuBar-item.p-mod-collapsed,.p-MenuBar-item.p-mod-hidden{display:none}.p-Menu{position:absolute;top:0;left:0;padding:3px 0;white-space:nowrap;overflow-x:hidden;overflow-y:auto;z-index:100000}.p-Menu-content{display:table;width:100%;margin:0;padding:0;border-spacing:0;list-style-type:none}.p-Menu-item{display:table-row}.p-Menu-item.p-mod-collapsed{display:none}.p-Menu-item>span{display:table-cell;padding-top:4px;padding-bottom:4px}.p-Menu-item-icon{width:21px;padding-left:2px;padding-right:2px;text-align:center}.p-Menu-item-text{padding-left:2px;padding-right:35px}.p-Menu-item-shortcut{text-align:right}.p-Menu-item-submenu{width:16px;text-align:center}.p-Menu-item.p-mod-separator-type>span{padding:0;height:9px;line-height:0;text-indent:100%;overflow:hidden;whitespace:nowrap;vertical-align:top}.p-Menu-item.p-mod-separator-type>span::after{content:'';display:block;position:relative;top:4px}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-menus\\lib\\index.css"})); module.exports = css;
 },{"browserify-css":2}],17:[function(require,module,exports){
 
@@ -3874,7 +3874,7 @@ function openSubmenu(menu, item) {
 	showMenu(menu, x, y);
 }
 
-},{"./menubase":20,"./menuitem":21,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-signaling":27,"phosphor-widget":40}],19:[function(require,module,exports){
+},{"./menubase":20,"./menuitem":21,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-signaling":27,"phosphor-widget":39}],19:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -4490,7 +4490,7 @@ function collapseSeparators(items, nodes) {
 }
 exports.collapseSeparators = collapseSeparators;
 
-},{"./menuitem":21,"phosphor-arrays":22,"phosphor-properties":26,"phosphor-widget":40}],21:[function(require,module,exports){
+},{"./menuitem":21,"phosphor-arrays":22,"phosphor-properties":26,"phosphor-widget":39}],21:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
@@ -6532,7 +6532,7 @@ var SplitLayoutPrivate;
 	}
 })(SplitLayoutPrivate || (SplitLayoutPrivate = {}));
 
-},{"./index.css":28,"phosphor-arrays":30,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-widget":40}],30:[function(require,module,exports){
+},{"./index.css":28,"phosphor-arrays":30,"phosphor-boxengine":3,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-widget":39}],30:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"dup":6}],31:[function(require,module,exports){
 var css = ".p-StackedPanel{position:relative}.p-StackedPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-stackedpanel\\lib\\index.css"})); module.exports = css;
@@ -6855,8 +6855,8 @@ var StackedLayoutPrivate;
 	}
 })(StackedLayoutPrivate || (StackedLayoutPrivate = {}));
 
-},{"./index.css":31,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":40}],33:[function(require,module,exports){
-var css = ".p-TabBar{position:relative;z-index:0}.p-TabBar-header{display:none;position:absolute;top:0;left:0;right:0;z-index:0}.p-TabBar-body{position:absolute;top:0;left:0;right:0;bottom:0;z-index:2}.p-TabBar-footer{display:none;position:absolute;left:0;right:0;bottom:0;z-index:1}.p-TabBar-content{margin:0;padding:0;height:100%;display:flex;flex-direction:row;list-style-type:none}.p-Tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-Tab-close,.p-Tab-icon{flex:0 0 auto}.p-Tab-text{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging .p-Tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging .p-Tab.p-mod-dragging{transition:none}.p-TabPanel{z-index:0}.p-TabPanel>.p-TabBar{z-index:1}.p-TabPanel>.p-StackedPanel{z-index:0}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-tabs\\lib\\index.css"})); module.exports = css;
+},{"./index.css":31,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":39}],33:[function(require,module,exports){
+var css = ".p-TabBar{position:relative;z-index:0}.p-TabBar-header{display:none;position:absolute;top:0;left:0;right:0;z-index:0}.p-TabBar-body{position:absolute;top:0;left:0;right:0;bottom:0;z-index:2}.p-TabBar-footer{display:none;position:absolute;left:0;right:0;bottom:0;z-index:1}.p-TabBar-content{margin:0;padding:0;height:100%;display:flex;flex-direction:row;list-style-type:none}.p-TabBar-tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-TabBar-tab-close,.p-TabBar-tab-icon{flex:0 0 auto}.p-TabBar-tab-text{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging .p-TabBar-tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging .p-TabBar-tab.p-mod-dragging{transition:none}.p-TabPanel{position:relative;z-index:0}.p-TabPanel>.p-Widget{position:absolute}.p-TabPanel>.p-TabBar{z-index:1}.p-TabPanel>.p-StackedPanel{z-index:0}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-tabs\\lib\\index.css"})); module.exports = css;
 },{"browserify-css":2}],34:[function(require,module,exports){
 
 'use strict';
@@ -6877,12 +6877,10 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var arrays = require('phosphor-arrays');
 var phosphor_domutil_1 = require('phosphor-domutil');
-var phosphor_messaging_1 = require('phosphor-messaging');
-var phosphor_nodewrapper_1 = require('phosphor-nodewrapper');
-var phosphor_observablelist_1 = require('phosphor-observablelist');
 var phosphor_properties_1 = require('phosphor-properties');
 var phosphor_signaling_1 = require('phosphor-signaling');
 var phosphor_widget_1 = require('phosphor-widget');
+
 
 var TAB_BAR_CLASS = 'p-TabBar';
 
@@ -6894,13 +6892,13 @@ var CONTENT_CLASS = 'p-TabBar-content';
 
 var FOOTER_CLASS = 'p-TabBar-footer';
 
-var TAB_CLASS = 'p-Tab';
+var TAB_CLASS = 'p-TabBar-tab';
 
-var TEXT_CLASS = 'p-Tab-text';
+var TEXT_CLASS = 'p-TabBar-tab-text';
 
-var ICON_CLASS = 'p-Tab-icon';
+var ICON_CLASS = 'p-TabBar-tab-icon';
 
-var CLOSE_CLASS = 'p-Tab-close';
+var CLOSE_CLASS = 'p-TabBar-tab-close';
 
 var DRAGGING_CLASS = 'p-mod-dragging';
 
@@ -6908,13 +6906,9 @@ var CURRENT_CLASS = 'p-mod-current';
 
 var CLOSABLE_CLASS = 'p-mod-closable';
 
-var FIRST_CLASS = 'p-mod-first';
-
-var LAST_CLASS = 'p-mod-last';
-
 var DRAG_THRESHOLD = 5;
 
-var TEAR_OFF_THRESHOLD = 20;
+var DETACH_THRESHOLD = 20;
 
 var TRANSITION_DURATION = 150;
 
@@ -6923,7 +6917,9 @@ var TabBar = (function (_super) {
 
 	function TabBar() {
 		_super.call(this);
-		this._tabs = [];
+		this._dirty = false;
+		this._tabsMovable = false;
+		this._titles = [];
 		this._dragData = null;
 		this.addClass(TAB_BAR_CLASS);
 	}
@@ -6947,46 +6943,49 @@ var TabBar = (function (_super) {
 
 	TabBar.prototype.dispose = function () {
 		this._releaseMouse();
-		this._tabs.forEach(function (tab) { tab.dispose(); });
-		this._tabs.length = 0;
+		this._titles.length = 0;
 		_super.prototype.dispose.call(this);
 	};
-	Object.defineProperty(TabBar.prototype, "itemCloseRequested", {
+	Object.defineProperty(TabBar.prototype, "tabMoved", {
 
 		get: function () {
-			return TabBar.itemCloseRequestedSignal.bind(this);
+			return TabBarPrivate.tabMovedSignal.bind(this);
 		},
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(TabBar.prototype, "currentItem", {
+	Object.defineProperty(TabBar.prototype, "tabCloseRequested", {
 
 		get: function () {
-			return TabBar.currentItemProperty.get(this);
+			return TabBarPrivate.tabCloseRequestedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(TabBar.prototype, "tabDetachRequested", {
+
+		get: function () {
+			return TabBarPrivate.tabDetachRequestedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(TabBar.prototype, "currentChanged", {
+
+		get: function () {
+			return TabBarPrivate.currentChangedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(TabBar.prototype, "currentTitle", {
+
+		get: function () {
+			return TabBarPrivate.currentTitleProperty.get(this);
 		},
 
 		set: function (value) {
-			TabBar.currentItemProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TabBar.prototype, "currentItemChanged", {
-
-		get: function () {
-			return TabBar.currentItemProperty.notify.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TabBar.prototype, "items", {
-
-		get: function () {
-			return TabBar.itemsProperty.get(this);
-		},
-
-		set: function (value) {
-			TabBar.itemsProperty.set(this, value);
+			TabBarPrivate.currentTitleProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
@@ -6994,11 +6993,11 @@ var TabBar = (function (_super) {
 	Object.defineProperty(TabBar.prototype, "tabsMovable", {
 
 		get: function () {
-			return TabBar.tabsMovableProperty.get(this);
+			return this._tabsMovable;
 		},
 
 		set: function (value) {
-			TabBar.tabsMovableProperty.set(this, value);
+			this._tabsMovable = value;
 		},
 		enumerable: true,
 		configurable: true
@@ -7036,6 +7035,66 @@ var TabBar = (function (_super) {
 		configurable: true
 	});
 
+	TabBar.prototype.titleCount = function () {
+		return this._titles.length;
+	};
+
+	TabBar.prototype.titleAt = function (index) {
+		return this._titles[index];
+	};
+
+	TabBar.prototype.titleIndex = function (title) {
+		return this._titles.indexOf(title);
+	};
+
+	TabBar.prototype.addTitle = function (title) {
+		this.insertTitle(this.titleCount(), title);
+	};
+
+	TabBar.prototype.insertTitle = function (index, title) {
+
+		this._releaseMouse();
+
+		var n = this.titleCount();
+		var i = this.titleIndex(title);
+		var j = Math.max(0, Math.min(index | 0, n));
+		if (i !== -1) {
+			if (j === n)
+				j--;
+			if (i === j)
+				return;
+			arrays.move(this._titles, i, j);
+		}
+		else {
+			arrays.insert(this._titles, j, title);
+			title.changed.connect(this._onTitleChanged, this);
+			if (!this.currentTitle)
+				this.currentTitle = title;
+		}
+
+		this._dirty = true;
+		this.update();
+	};
+
+	TabBar.prototype.removeTitle = function (title) {
+
+		this._releaseMouse();
+
+		var i = arrays.remove(this._titles, title);
+		if (i === -1) {
+			return;
+		}
+
+		title.changed.disconnect(this._onTitleChanged, this);
+
+		if (this.currentTitle === title) {
+			this.currentTitle = this._titles[i] || this._titles[i - 1];
+		}
+
+		this._dirty = true;
+		this.update();
+	};
+
 	TabBar.prototype.releaseMouse = function () {
 		this._releaseMouse();
 	};
@@ -7054,19 +7113,15 @@ var TabBar = (function (_super) {
 			case 'mouseup':
 				this._evtMouseUp(event);
 				break;
+			case 'keydown':
+				this._evtKeyDown(event);
+				break;
+			case 'contextmenu':
+				event.preventDefault();
+				event.stopPropagation();
+				break;
 		}
 	};
-
-	TabBar.prototype.processMessage = function (msg) {
-		if (msg.type === 'tear-off-request') {
-			this.onTearOffRequest(msg);
-		}
-		else {
-			_super.prototype.processMessage.call(this, msg);
-		}
-	};
-
-	TabBar.prototype.onTearOffRequest = function (msg) { };
 
 	TabBar.prototype.onAfterAttach = function (msg) {
 		this.node.addEventListener('click', this);
@@ -7074,24 +7129,28 @@ var TabBar = (function (_super) {
 	};
 
 	TabBar.prototype.onBeforeDetach = function (msg) {
+		this._releaseMouse();
 		this.node.removeEventListener('click', this);
 		this.node.removeEventListener('mousedown', this);
 	};
 
 	TabBar.prototype.onUpdateRequest = function (msg) {
-		for (var i = 0, n = this._tabs.length, k = n - 1; i < n; ++i) {
-			var tab = this._tabs[i];
-			var style = tab.node.style;
-			if (tab.hasClass(CURRENT_CLASS)) {
-				style.zIndex = n + '';
-			}
-			else {
-				style.zIndex = k-- + '';
-			}
-			style.order = i + '';
-			tab.toggleClass(FIRST_CLASS, i === 0);
-			tab.toggleClass(LAST_CLASS, i === n - 1);
+		if (this._dirty) {
+			this._dirty = false;
+			TabBarPrivate.updateTabs(this);
 		}
+		else {
+			TabBarPrivate.updateZOrder(this);
+		}
+	};
+
+	TabBar.prototype._evtKeyDown = function (event) {
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		if (event.keyCode === 27)
+			this._releaseMouse();
 	};
 
 	TabBar.prototype._evtClick = function (event) {
@@ -7100,18 +7159,29 @@ var TabBar = (function (_super) {
 			return;
 		}
 
-		var index = hitTestTabs(this._tabs, event.clientX, event.clientY);
-		if (index < 0) {
+		if (this._dragData) {
+			return;
+		}
+
+		var i = TabBarPrivate.hitTestTabs(this, event.clientX, event.clientY);
+		if (i < 0) {
 			return;
 		}
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		var tab = this._tabs[index];
-		if (tab.closeNode.contains(event.target)) {
-			this.itemCloseRequested.emit(tab.item);
+		var title = this._titles[i];
+		if (!title.closable) {
+			return;
 		}
+
+		var icon = TabBarPrivate.closeIconNode(this, i);
+		if (!icon.contains(event.target)) {
+			return;
+		}
+
+		this.tabCloseRequested.emit(title);
 	};
 
 	TabBar.prototype._evtMouseDown = function (event) {
@@ -7124,107 +7194,40 @@ var TabBar = (function (_super) {
 			return;
 		}
 
-		var index = hitTestTabs(this._tabs, event.clientX, event.clientY);
-		if (index < 0) {
+		var i = TabBarPrivate.hitTestTabs(this, event.clientX, event.clientY);
+		if (i < 0) {
 			return;
 		}
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		var tab = this._tabs[index];
-		if (tab.closeNode.contains(event.target)) {
+		var icon = TabBarPrivate.closeIconNode(this, i);
+		if (icon.contains(event.target)) {
 			return;
 		}
 
-		if (this.tabsMovable) {
-			var tabRect = tab.node.getBoundingClientRect();
-			var data = this._dragData = new DragData();
-			data.tab = tab;
-			data.tabIndex = index;
-			data.tabLeft = tab.node.offsetLeft;
-			data.tabWidth = tabRect.width;
-			data.pressX = event.clientX;
-			data.pressY = event.clientY;
-			data.tabPressX = event.clientX - tabRect.left;
-			document.addEventListener('mouseup', this, true);
+		if (this._tabsMovable) {
+			this._dragData = TabBarPrivate.initDrag(i, event);
 			document.addEventListener('mousemove', this, true);
+			document.addEventListener('mouseup', this, true);
+			document.addEventListener('keydown', this, true);
+			document.addEventListener('contextmenu', this, true);
 		}
 
-		this.currentItem = tab.item;
+		this.currentTitle = this._titles[i];
 	};
 
 	TabBar.prototype._evtMouseMove = function (event) {
 
+		if (!this._dragData) {
+			return;
+		}
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		var data = this._dragData;
-		if (!data) {
-			return;
-		}
-
-
-		if (!data.dragActive) {
-			var dx = Math.abs(event.clientX - data.pressX);
-			var dy = Math.abs(event.clientY - data.pressY);
-			if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
-				return;
-			}
-
-			data.contentRect = this.contentNode.getBoundingClientRect();
-			data.tabLayout = snapTabLayout(this._tabs);
-			data.cursorGrab = phosphor_domutil_1.overrideCursor('default');
-			data.dragActive = true;
-
-			data.tab.addClass(DRAGGING_CLASS);
-			this.addClass(DRAGGING_CLASS);
-		}
-
-		if (!data.tearOffRequested && tearOffExceeded(data.contentRect, event)) {
-
-			data.tearOffRequested = true;
-
-			var item = data.tab.item;
-			var node = data.tab.node;
-			var clientX = event.clientX;
-			var clientY = event.clientY;
-			phosphor_messaging_1.sendMessage(this, new TearOffMessage(item, node, clientX, clientY));
-
-			if (!this._dragData) {
-				return;
-			}
-		}
-
-		var offsetLeft = event.clientX - data.contentRect.left;
-		var targetLeft = offsetLeft - data.tabPressX;
-		var targetRight = targetLeft + data.tabWidth;
-
-		data.tabTargetIndex = data.tabIndex;
-
-		var tabs = this._tabs;
-		for (var i = 0, n = tabs.length; i < n; ++i) {
-			var style = tabs[i].node.style;
-			var layout = data.tabLayout[i];
-			var threshold = layout.left + (layout.width >> 1);
-			if (i < data.tabIndex && targetLeft < threshold) {
-				style.left = data.tabWidth + data.tabLayout[i + 1].margin + 'px';
-				data.tabTargetIndex = Math.min(data.tabTargetIndex, i);
-			}
-			else if (i > data.tabIndex && targetRight > threshold) {
-				style.left = -data.tabWidth - layout.margin + 'px';
-				data.tabTargetIndex = i;
-			}
-			else if (i !== data.tabIndex) {
-				style.left = '';
-			}
-		}
-
-		var idealLeft = event.clientX - data.pressX;
-		var maxLeft = data.contentRect.width - (data.tabLeft + data.tabWidth);
-		var adjustedLeft = Math.max(-data.tabLeft, Math.min(idealLeft, maxLeft));
-		data.tab.node.style.left = adjustedLeft + 'px';
+		TabBarPrivate.moveDrag(this, this._dragData, event);
 	};
 
 	TabBar.prototype._evtMouseUp = function (event) {
@@ -7234,446 +7237,56 @@ var TabBar = (function (_super) {
 			return;
 		}
 
+		if (!this._dragData) {
+			return;
+		}
 
 		event.preventDefault();
 		event.stopPropagation();
 
-		var data = this._dragData;
-		if (!data) {
-			return;
-		}
-
-		document.removeEventListener('mouseup', this, true);
 		document.removeEventListener('mousemove', this, true);
+		document.removeEventListener('mouseup', this, true);
+		document.removeEventListener('keydown', this, true);
+		document.removeEventListener('contextmenu', this, true);
 
-		if (!data.dragActive) {
-			this._dragData = null;
-			return;
-		}
-
-		var idealLeft;
-		if (data.tabTargetIndex === data.tabIndex) {
-			idealLeft = 0;
-		}
-		else if (data.tabTargetIndex > data.tabIndex) {
-			var tl = data.tabLayout[data.tabTargetIndex];
-			idealLeft = tl.left + tl.width - data.tabWidth - data.tabLeft;
-		}
-		else {
-			var tl = data.tabLayout[data.tabTargetIndex];
-			idealLeft = tl.left - data.tabLeft;
-		}
-
-		var maxLeft = data.contentRect.width - (data.tabLeft + data.tabWidth);
-		var adjustedLeft = Math.max(-data.tabLeft, Math.min(idealLeft, maxLeft));
-		data.tab.node.style.left = adjustedLeft + 'px';
-
-		data.tab.removeClass(DRAGGING_CLASS);
-
-		setTimeout(function () {
-
-			if (_this._dragData !== data) {
-				return;
-			}
-
-			_this._dragData = null;
-
-			for (var i = 0, n = _this._tabs.length; i < n; ++i) {
-				_this._tabs[i].node.style.left = '';
-			}
-
-			data.cursorGrab.dispose();
-			_this.removeClass(DRAGGING_CLASS);
-
-			var fromIndex = data.tabIndex;
-			var toIndex = data.tabTargetIndex;
-			if (toIndex !== -1 && fromIndex !== toIndex) {
-				_this.items.move(fromIndex, toIndex);
-
-				phosphor_messaging_1.sendMessage(_this, phosphor_widget_1.Widget.MsgUpdateRequest);
-			}
-		}, TRANSITION_DURATION);
+		TabBarPrivate.endDrag(this, this._dragData, event, {
+			clear: function () { _this._dragData = null; },
+			move: function (i, j) { _this._moveTab(i, j); },
+		});
 	};
 
 	TabBar.prototype._releaseMouse = function () {
 
-		var data = this._dragData;
-		if (!data) {
+		if (!this._dragData) {
 			return;
 		}
 
-		this._dragData = null;
-
-		document.removeEventListener('mouseup', this, true);
 		document.removeEventListener('mousemove', this, true);
+		document.removeEventListener('mouseup', this, true);
+		document.removeEventListener('keydown', this, true);
+		document.removeEventListener('contextmenu', this, true);
 
-		if (!data.dragActive) {
-			return;
-		}
-
-		for (var i = 0, n = this._tabs.length; i < n; ++i) {
-			this._tabs[i].node.style.left = '';
-		}
-
-		data.cursorGrab.dispose();
-		data.tab.removeClass(DRAGGING_CLASS);
-		this.removeClass(DRAGGING_CLASS);
+		TabBarPrivate.abortDrag(this, this._dragData);
+		this._dragData = null;
 	};
 
-	TabBar.prototype._coerceCurrentItem = function (item) {
-		var list = this.items;
-		return (item && list && list.contains(item)) ? item : null;
-	};
-
-	TabBar.prototype._onCurrentItemChanged = function (oldItem, newItem) {
-		var oldTab = arrays.find(this._tabs, function (tab) { return tab.item === oldItem; });
-		var newTab = arrays.find(this._tabs, function (tab) { return tab.item === newItem; });
-		if (oldTab)
-			oldTab.removeClass(CURRENT_CLASS);
-		if (newTab)
-			newTab.addClass(CURRENT_CLASS);
-		this.update();
-	};
-
-	TabBar.prototype._onItemsChanged = function (oldList, newList) {
-
-		this._releaseMouse();
-
-		if (oldList) {
-			oldList.changed.disconnect(this._onItemsListChanged, this);
-			var content = this.contentNode;
-			while (this._tabs.length) {
-				var tab = this._tabs.pop();
-				content.removeChild(tab.node);
-				tab.dispose();
-			}
-		}
-
-		if (newList) {
-			var content = this.contentNode;
-			for (var i = 0, n = newList.length; i < n; ++i) {
-				var tab = new Tab(newList.get(i));
-				content.appendChild(tab.node);
-				this._tabs.push(tab);
-			}
-			newList.changed.connect(this._onItemsListChanged, this);
-		}
-
-		this.currentItem = newList && newList.get(0);
-
-		this.update();
-	};
-
-	TabBar.prototype._onItemsListChanged = function (sender, args) {
-		switch (args.type) {
-			case phosphor_observablelist_1.ListChangeType.Add:
-				this._onItemsListAdd(args);
-				break;
-			case phosphor_observablelist_1.ListChangeType.Move:
-				this._onItemsListMove(args);
-				break;
-			case phosphor_observablelist_1.ListChangeType.Remove:
-				this._onItemsListRemove(args);
-				break;
-			case phosphor_observablelist_1.ListChangeType.Replace:
-				this._onItemsListReplace(args);
-				break;
-			case phosphor_observablelist_1.ListChangeType.Set:
-				this._onItemsListSet(args);
-				break;
-		}
-	};
-
-	TabBar.prototype._onItemsListAdd = function (args) {
-
-		this._releaseMouse();
-
-		var tab = new Tab(args.newValue);
-
-		arrays.insert(this._tabs, args.newIndex, tab);
-
-		this.contentNode.appendChild(tab.node);
-
-		if (!this.currentItem)
-			this.currentItem = tab.item;
-
-		this.update();
-	};
-
-	TabBar.prototype._onItemsListMove = function (args) {
-
-		this._releaseMouse();
-
-		arrays.move(this._tabs, args.oldIndex, args.newIndex);
-
-		this.update();
-	};
-
-	TabBar.prototype._onItemsListRemove = function (args) {
-
-		this._releaseMouse();
-
-		var tab = arrays.removeAt(this._tabs, args.oldIndex);
-
-		this.contentNode.removeChild(tab.node);
-
-		if (this.currentItem === tab.item) {
-			var list = this.items;
-			this.currentItem = list.get(args.oldIndex) || list.get(-1);
-		}
-
-		tab.dispose();
-
-		this.update();
-	};
-
-	TabBar.prototype._onItemsListReplace = function (args) {
-
-		this._releaseMouse();
-
-		var newItems = args.newValue;
-		var newTabs = newItems.map(function (item) { return new Tab(item); });
-
-		var oldItems = args.oldValue;
-		var oldTabs = (_a = this._tabs).splice.apply(_a, [args.newIndex, oldItems.length].concat(newTabs));
-
+	TabBar.prototype._moveTab = function (i, j) {
+		var k = j < i ? j : j + 1;
 		var content = this.contentNode;
-		oldTabs.forEach(function (tab) { content.removeChild(tab.node); });
-
-		newTabs.forEach(function (tab) { content.appendChild(tab.node); });
-
-		var curr = this.currentItem;
-		if (oldItems.indexOf(curr) !== -1) {
-			this.currentItem = null;
-			if (newItems.indexOf(curr) !== -1) {
-				this.currentItem = curr;
-			}
-			else {
-				var list = this.items;
-				this.currentItem = list.get(args.newIndex) || list.get(-1);
-			}
-		}
-
-		oldTabs.forEach(function (tab) { tab.dispose(); });
-
-		this.update();
-		var _a;
-	};
-
-	TabBar.prototype._onItemsListSet = function (args) {
-
-		if (args.oldValue === args.newValue) {
-			return;
-		}
-
-		this._releaseMouse();
-
-		var newTab = new Tab(args.newValue);
-
-		var oldTab = this._tabs[args.newIndex];
-		this._tabs[args.newIndex] = newTab;
-
-		this.contentNode.replaceChild(newTab.node, oldTab.node);
-
-		if (this.currentItem === oldTab.item) {
-			this.currentItem = newTab.item;
-		}
-
-		oldTab.dispose();
-
+		var children = content.children;
+		arrays.move(this._titles, i, j);
+		content.insertBefore(children[i], children[k]);
+		this.tabMoved.emit({ fromIndex: i, toIndex: j });
 		this.update();
 	};
 
-	TabBar.itemCloseRequestedSignal = new phosphor_signaling_1.Signal();
-
-	TabBar.currentItemProperty = new phosphor_properties_1.Property({
-		name: 'currentItem',
-		value: null,
-		coerce: function (owner, value) { return owner._coerceCurrentItem(value); },
-		changed: function (owner, old, value) { owner._onCurrentItemChanged(old, value); },
-		notify: new phosphor_signaling_1.Signal(),
-	});
-
-	TabBar.itemsProperty = new phosphor_properties_1.Property({
-		name: 'items',
-		value: null,
-		coerce: function (owner, value) { return value || null; },
-		changed: function (owner, old, value) { owner._onItemsChanged(old, value); },
-	});
-
-	TabBar.tabsMovableProperty = new phosphor_properties_1.Property({
-		name: 'tabsMovable',
-		value: false,
-		changed: function (owner) { owner._releaseMouse(); },
-	});
+	TabBar.prototype._onTitleChanged = function (sender) {
+		this._dirty = true;
+		this.update();
+	};
 	return TabBar;
 })(phosphor_widget_1.Widget);
 exports.TabBar = TabBar;
-
-var TearOffMessage = (function (_super) {
-	__extends(TearOffMessage, _super);
-
-	function TearOffMessage(item, node, clientX, clientY) {
-		_super.call(this, 'tear-off-request');
-		this._item = item;
-		this._node = node;
-		this._clientX = clientX;
-		this._clientY = clientY;
-	}
-	Object.defineProperty(TearOffMessage.prototype, "item", {
-
-		get: function () {
-			return this._item;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TearOffMessage.prototype, "node", {
-
-		get: function () {
-			return this._node;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TearOffMessage.prototype, "clientX", {
-
-		get: function () {
-			return this._clientX;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TearOffMessage.prototype, "clientY", {
-
-		get: function () {
-			return this._clientY;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	return TearOffMessage;
-})(phosphor_messaging_1.Message);
-exports.TearOffMessage = TearOffMessage;
-
-var Tab = (function (_super) {
-	__extends(Tab, _super);
-
-	function Tab(item) {
-		_super.call(this);
-		this.addClass(TAB_CLASS);
-		this._item = item;
-		var title = item.title;
-		this.textNode.textContent = title.text;
-		this.toggleClass(CLOSABLE_CLASS, title.closable);
-		if (title.icon)
-			exAddClass(this.iconNode, title.icon);
-		if (title.className)
-			exAddClass(this.node, title.className);
-		title.changed.connect(this._onTitleChanged, this);
-	}
-
-	Tab.createNode = function () {
-		var node = document.createElement('li');
-		var icon = document.createElement('span');
-		var text = document.createElement('span');
-		var close = document.createElement('span');
-		icon.className = ICON_CLASS;
-		text.className = TEXT_CLASS;
-		close.className = CLOSE_CLASS;
-		node.appendChild(icon);
-		node.appendChild(text);
-		node.appendChild(close);
-		return node;
-	};
-
-	Tab.prototype.dispose = function () {
-		this._item = null;
-		phosphor_signaling_1.clearSignalData(this);
-	};
-	Object.defineProperty(Tab.prototype, "isDisposed", {
-
-		get: function () {
-			return this._item === null;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Tab.prototype, "iconNode", {
-
-		get: function () {
-			return this.node.childNodes[0];
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Tab.prototype, "textNode", {
-
-		get: function () {
-			return this.node.childNodes[1];
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Tab.prototype, "closeNode", {
-
-		get: function () {
-			return this.node.childNodes[2];
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Tab.prototype, "item", {
-
-		get: function () {
-			return this._item;
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	Tab.prototype._onTitleChanged = function (sender, args) {
-		switch (args.name) {
-			case 'text':
-				this._onTitleTextChanged(args);
-				break;
-			case 'icon':
-				this._onTitleIconChanged(args);
-				break;
-			case 'closable':
-				this._onTitleClosableChanged(args);
-				break;
-			case 'className':
-				this._onTitleClassNameChanged(args);
-				break;
-		}
-	};
-
-	Tab.prototype._onTitleTextChanged = function (args) {
-		this.textNode.textContent = args.newValue;
-	};
-
-	Tab.prototype._onTitleIconChanged = function (args) {
-		var node = this.iconNode;
-		if (args.oldValue)
-			exRemClass(node, args.oldValue);
-		if (args.newValue)
-			exAddClass(node, args.newValue);
-	};
-
-	Tab.prototype._onTitleClosableChanged = function (args) {
-		this.toggleClass(CLOSABLE_CLASS, args.newValue);
-	};
-
-	Tab.prototype._onTitleClassNameChanged = function (args) {
-		var node = this.node;
-		if (args.oldValue)
-			exRemClass(node, args.oldValue);
-		if (args.newValue)
-			exAddClass(node, args.newValue);
-	};
-	return Tab;
-})(phosphor_nodewrapper_1.NodeWrapper);
 
 var DragData = (function () {
 	function DragData() {
@@ -7688,7 +7301,7 @@ var DragData = (function () {
 
 		this.tabPressX = -1;
 
-		this.tabTargetIndex = -1;
+		this.targetIndex = -1;
 
 		this.tabLayout = null;
 
@@ -7702,58 +7315,295 @@ var DragData = (function () {
 
 		this.dragActive = false;
 
-		this.tearOffRequested = false;
+		this.dragAborted = false;
+
+		this.detachRequested = false;
 	}
 	return DragData;
 })();
 
-function exAddClass(node, name) {
-	var list = node.classList;
-	var parts = name.split(/\s+/);
-	for (var i = 0, n = parts.length; i < n; ++i) {
-		if (parts[i])
-			list.add(parts[i]);
+var TabBarPrivate;
+(function (TabBarPrivate) {
+
+	TabBarPrivate.currentChangedSignal = new phosphor_signaling_1.Signal();
+
+	TabBarPrivate.tabMovedSignal = new phosphor_signaling_1.Signal();
+
+	TabBarPrivate.tabCloseRequestedSignal = new phosphor_signaling_1.Signal();
+
+	TabBarPrivate.tabDetachRequestedSignal = new phosphor_signaling_1.Signal();
+
+	TabBarPrivate.currentTitleProperty = new phosphor_properties_1.Property({
+		name: 'currentTitle',
+		value: null,
+		coerce: coerceCurrentTitle,
+		changed: onCurrentTitleChanged,
+		notify: TabBarPrivate.currentChangedSignal,
+	});
+
+	function closeIconNode(owner, index) {
+		return owner.contentNode.children[index].lastChild;
 	}
-}
+	TabBarPrivate.closeIconNode = closeIconNode;
 
-function exRemClass(node, name) {
-	var list = node.classList;
-	var parts = name.split(/\s+/);
-	for (var i = 0, n = parts.length; i < n; ++i) {
-		if (parts[i])
-			list.remove(parts[i]);
+	function hitTestTabs(owner, x, y) {
+		var nodes = owner.contentNode.children;
+		for (var i = 0, n = nodes.length; i < n; ++i) {
+			if (phosphor_domutil_1.hitTest(nodes[i], x, y))
+				return i;
+		}
+		return -1;
 	}
-}
+	TabBarPrivate.hitTestTabs = hitTestTabs;
 
-function hitTestTabs(tabs, clientX, clientY) {
-	for (var i = 0, n = tabs.length; i < n; ++i) {
-		if (phosphor_domutil_1.hitTest(tabs[i].node, clientX, clientY))
-			return i;
+	function updateTabs(owner) {
+		var count = owner.titleCount();
+		var content = owner.contentNode;
+		var children = content.children;
+		var current = owner.currentTitle;
+		while (children.length > count) {
+			content.removeChild(content.lastChild);
+		}
+		while (children.length < count) {
+			content.appendChild(createTabNode());
+		}
+		for (var i = 0; i < count; ++i) {
+			var node = children[i];
+			updateTabNode(node, owner.titleAt(i));
+		}
+		updateZOrder(owner);
 	}
-	return -1;
-}
+	TabBarPrivate.updateTabs = updateTabs;
 
-function snapTabLayout(tabs) {
-	var layout = new Array(tabs.length);
-	for (var i = 0, n = tabs.length; i < n; ++i) {
-		var node = tabs[i].node;
-		var left = node.offsetLeft;
-		var width = node.offsetWidth;
-		var cstyle = window.getComputedStyle(node);
-		var margin = parseInt(cstyle.marginLeft, 10) || 0;
-		layout[i] = { margin: margin, left: left, width: width };
+	function updateZOrder(owner) {
+		var count = owner.titleCount();
+		var content = owner.contentNode;
+		var children = content.children;
+		var current = owner.currentTitle;
+		for (var i = 0; i < count; ++i) {
+			var node = children[i];
+			if (owner.titleAt(i) === current) {
+				node.classList.add(CURRENT_CLASS);
+				node.style.zIndex = count + '';
+			}
+			else {
+				node.classList.remove(CURRENT_CLASS);
+				node.style.zIndex = count - i - 1 + '';
+			}
+		}
 	}
-	return layout;
-}
+	TabBarPrivate.updateZOrder = updateZOrder;
 
-function tearOffExceeded(rect, event) {
-	return ((event.clientX < rect.left - TEAR_OFF_THRESHOLD) ||
-		(event.clientX >= rect.right + TEAR_OFF_THRESHOLD) ||
-		(event.clientY < rect.top - TEAR_OFF_THRESHOLD) ||
-		(event.clientY >= rect.bottom + TEAR_OFF_THRESHOLD));
-}
+	function initDrag(tabIndex, event) {
+		var data = new DragData();
+		data.tabIndex = tabIndex;
+		data.pressX = event.clientX;
+		data.pressY = event.clientY;
+		return data;
+	}
+	TabBarPrivate.initDrag = initDrag;
 
-},{"phosphor-arrays":37,"phosphor-domutil":13,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-observablelist":38,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":40}],36:[function(require,module,exports){
+	function moveDrag(owner, data, event) {
+
+		if (!data.dragActive) {
+			var dx = Math.abs(event.clientX - data.pressX);
+			var dy = Math.abs(event.clientY - data.pressY);
+			if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
+				return;
+			}
+
+			var content = owner.contentNode;
+			var tab = content.children[data.tabIndex];
+			var tabRect = tab.getBoundingClientRect();
+			data.tab = tab;
+			data.tabLeft = tab.offsetLeft;
+			data.tabWidth = tabRect.width;
+			data.tabPressX = data.pressX - tabRect.left;
+			data.contentRect = content.getBoundingClientRect();
+			data.tabLayout = snapTabLayout(owner);
+			data.cursorGrab = phosphor_domutil_1.overrideCursor('default');
+
+			tab.classList.add(DRAGGING_CLASS);
+			owner.addClass(DRAGGING_CLASS);
+			data.dragActive = true;
+		}
+
+		if (!data.detachRequested && detachExceeded(data.contentRect, event)) {
+			var node = data.tab;
+			var clientX = event.clientX;
+			var clientY = event.clientY;
+			var title = owner.titleAt(data.tabIndex);
+			owner.tabDetachRequested.emit({ title: title, node: node, clientX: clientX, clientY: clientY });
+			data.detachRequested = true;
+			if (data.dragAborted) {
+				return;
+			}
+		}
+
+		var offsetLeft = event.clientX - data.contentRect.left;
+		var targetLeft = offsetLeft - data.tabPressX;
+		var targetRight = targetLeft + data.tabWidth;
+
+		data.targetIndex = data.tabIndex;
+
+		var tabs = owner.contentNode.children;
+		for (var i = 0, n = tabs.length; i < n; ++i) {
+			var layout = data.tabLayout[i];
+			var style = tabs[i].style;
+			var threshold = layout.left + (layout.width >> 1);
+			if (i < data.tabIndex && targetLeft < threshold) {
+				style.left = data.tabWidth + data.tabLayout[i + 1].margin + 'px';
+				data.targetIndex = Math.min(data.targetIndex, i);
+			}
+			else if (i > data.tabIndex && targetRight > threshold) {
+				style.left = -data.tabWidth - layout.margin + 'px';
+				data.targetIndex = i;
+			}
+			else if (i !== data.tabIndex) {
+				style.left = '';
+			}
+		}
+
+		var idealLeft = event.clientX - data.pressX;
+		var maxLeft = data.contentRect.width - (data.tabLeft + data.tabWidth);
+		var adjustedLeft = Math.max(-data.tabLeft, Math.min(idealLeft, maxLeft));
+		data.tab.style.left = adjustedLeft + 'px';
+	}
+	TabBarPrivate.moveDrag = moveDrag;
+
+	function endDrag(owner, data, event, handler) {
+
+		if (!data.dragActive) {
+			handler.clear();
+			return;
+		}
+
+		var idealLeft;
+		if (data.targetIndex === data.tabIndex) {
+			idealLeft = 0;
+		}
+		else if (data.targetIndex > data.tabIndex) {
+			var tl = data.tabLayout[data.targetIndex];
+			idealLeft = tl.left + tl.width - data.tabWidth - data.tabLeft;
+		}
+		else {
+			var tl = data.tabLayout[data.targetIndex];
+			idealLeft = tl.left - data.tabLeft;
+		}
+
+		var maxLeft = data.contentRect.width - (data.tabLeft + data.tabWidth);
+		var adjustedLeft = Math.max(-data.tabLeft, Math.min(idealLeft, maxLeft));
+		data.tab.style.left = adjustedLeft + 'px';
+
+		data.tab.classList.remove(DRAGGING_CLASS);
+
+		setTimeout(function () {
+
+			if (data.dragAborted) {
+				return;
+			}
+
+			handler.clear();
+
+			resetTabPositions(owner);
+
+			data.cursorGrab.dispose();
+			owner.removeClass(DRAGGING_CLASS);
+
+			if (data.targetIndex !== -1 && data.tabIndex !== data.targetIndex) {
+				handler.move(data.tabIndex, data.targetIndex);
+			}
+		}, TRANSITION_DURATION);
+	}
+	TabBarPrivate.endDrag = endDrag;
+
+	function abortDrag(owner, data) {
+
+
+		data.dragAborted = true;
+
+		if (!data.dragActive) {
+			return;
+		}
+
+		resetTabPositions(owner);
+
+		data.cursorGrab.dispose();
+		data.tab.classList.remove(DRAGGING_CLASS);
+		owner.removeClass(DRAGGING_CLASS);
+	}
+	TabBarPrivate.abortDrag = abortDrag;
+
+	function coerceCurrentTitle(owner, value) {
+		return (value && owner.titleIndex(value) !== -1) ? value : null;
+	}
+
+	function onCurrentTitleChanged(owner) {
+		owner.update();
+	}
+
+	function createTabNode() {
+		var node = document.createElement('li');
+		var icon = document.createElement('span');
+		var text = document.createElement('span');
+		var close = document.createElement('span');
+		text.className = TEXT_CLASS;
+		close.className = CLOSE_CLASS;
+		node.appendChild(icon);
+		node.appendChild(text);
+		node.appendChild(close);
+		return node;
+	}
+
+	function updateTabNode(node, title) {
+		var icon = node.firstChild;
+		var text = icon.nextSibling;
+		var suffix = title.closable ? ' ' + CLOSABLE_CLASS : '';
+		if (title.className) {
+			node.className = TAB_CLASS + ' ' + title.className + suffix;
+		}
+		else {
+			node.className = TAB_CLASS + suffix;
+		}
+		if (title.icon) {
+			icon.className = ICON_CLASS + ' ' + title.icon;
+		}
+		else {
+			icon.className = ICON_CLASS;
+		}
+		text.textContent = title.text;
+	}
+
+	function resetTabPositions(owner) {
+		var children = owner.contentNode.children;
+		for (var i = 0, n = children.length; i < n; ++i) {
+			children[i].style.left = '';
+		}
+	}
+
+	function snapTabLayout(owner) {
+		var layout = [];
+		var children = owner.contentNode.children;
+		for (var i = 0, n = children.length; i < n; ++i) {
+			var node = children[i];
+			var left = node.offsetLeft;
+			var width = node.offsetWidth;
+			var cstyle = window.getComputedStyle(node);
+			var margin = parseInt(cstyle.marginLeft, 10) || 0;
+			layout.push({ margin: margin, left: left, width: width });
+		}
+		return layout;
+	}
+
+	function detachExceeded(rect, event) {
+		return ((event.clientX < rect.left - DETACH_THRESHOLD) ||
+			(event.clientX >= rect.right + DETACH_THRESHOLD) ||
+			(event.clientY < rect.top - DETACH_THRESHOLD) ||
+			(event.clientY >= rect.bottom + DETACH_THRESHOLD));
+	}
+})(TabBarPrivate || (TabBarPrivate = {}));
+
+},{"phosphor-arrays":37,"phosphor-domutil":13,"phosphor-properties":26,"phosphor-signaling":27,"phosphor-widget":39}],36:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -7763,7 +7613,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var phosphor_boxpanel_1 = require('phosphor-boxpanel');
 var phosphor_stackedpanel_1 = require('phosphor-stackedpanel');
+var phosphor_widget_1 = require('phosphor-widget');
 var tabbar_1 = require('./tabbar');
+
 
 var TAB_PANEL_CLASS = 'p-TabPanel';
 
@@ -7773,18 +7625,21 @@ var TabPanel = (function (_super) {
 	function TabPanel() {
 		_super.call(this);
 		this.addClass(TAB_PANEL_CLASS);
-		var ctor = this.constructor;
-		this._tabs = ctor.createTabBar();
-		this._stack = ctor.createStackedPanel();
-		this._tabs.items = this._stack.children;
-		this._tabs.currentItemChanged.connect(this.onCurrentItemChanged, this);
-		this._tabs.itemCloseRequested.connect(this.onItemCloseRequested, this);
-		phosphor_boxpanel_1.BoxPanel.setStretch(this._tabs, 0);
-		phosphor_boxpanel_1.BoxPanel.setStretch(this._stack, 1);
-		this.direction = phosphor_boxpanel_1.BoxPanel.TopToBottom;
-		this.spacing = 0;
-		this.children.add(this._tabs);
-		this.children.add(this._stack);
+		var type = this.constructor;
+		this._tabBar = type.createTabBar();
+		this._stackedPanel = type.createStackedPanel();
+		this._tabBar.tabMoved.connect(this.onTabMoved, this);
+		this._tabBar.currentChanged.connect(this.onCurrentChanged, this);
+		this._tabBar.tabCloseRequested.connect(this.onTabCloseRequested, this);
+		this._stackedPanel.widgetRemoved.connect(this.onWidgetRemoved, this);
+		phosphor_boxpanel_1.BoxLayout.setStretch(this._tabBar, 0);
+		phosphor_boxpanel_1.BoxLayout.setStretch(this._stackedPanel, 1);
+		var layout = new phosphor_boxpanel_1.BoxLayout();
+		layout.direction = phosphor_boxpanel_1.BoxLayout.TopToBottom;
+		layout.spacing = 0;
+		layout.addChild(this._tabBar);
+		layout.addChild(this._stackedPanel);
+		this.layout = layout;
 	}
 
 	TabPanel.createTabBar = function () {
@@ -7796,18 +7651,18 @@ var TabPanel = (function (_super) {
 	};
 
 	TabPanel.prototype.dispose = function () {
-		this._tabs = null;
-		this._stack = null;
+		this._tabBar = null;
+		this._stackedPanel = null;
 		_super.prototype.dispose.call(this);
 	};
 	Object.defineProperty(TabPanel.prototype, "currentWidget", {
 
 		get: function () {
-			return this._tabs.currentItem;
+			return this._stackedPanel.currentWidget;
 		},
 
 		set: function (widget) {
-			this._tabs.currentItem = widget;
+			this._tabBar.currentTitle = widget && widget.title;
 		},
 		enumerable: true,
 		configurable: true
@@ -7815,252 +7670,91 @@ var TabPanel = (function (_super) {
 	Object.defineProperty(TabPanel.prototype, "tabsMovable", {
 
 		get: function () {
-			return this._tabs.tabsMovable;
+			return this._tabBar.tabsMovable;
 		},
 
 		set: function (movable) {
-			this._tabs.tabsMovable = movable;
+			this._tabBar.tabsMovable = movable;
 		},
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(TabPanel.prototype, "widgets", {
+	Object.defineProperty(TabPanel.prototype, "tabBar", {
 
 		get: function () {
-			return this._stack.children;
+			return this._tabBar;
 		},
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(TabPanel.prototype, "tabs", {
+	Object.defineProperty(TabPanel.prototype, "stackedPanel", {
 
 		get: function () {
-			return this._tabs;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TabPanel.prototype, "stack", {
-
-		get: function () {
-			return this._stack;
+			return this._stackedPanel;
 		},
 		enumerable: true,
 		configurable: true
 	});
 
-	TabPanel.prototype.onCurrentItemChanged = function (sender, args) {
-		this._stack.currentWidget = args.newValue;
+	TabPanel.prototype.childCount = function () {
+		return this._stackedPanel.childCount();
 	};
 
-	TabPanel.prototype.onItemCloseRequested = function (sender, args) {
-		if (args.title.closable)
-			args.close();
+	TabPanel.prototype.childAt = function (index) {
+		return this._stackedPanel.childAt(index);
+	};
+
+	TabPanel.prototype.childIndex = function (child) {
+		return this._stackedPanel.childIndex(child);
+	};
+
+	TabPanel.prototype.addChild = function (child) {
+		this._stackedPanel.addChild(child);
+		this._tabBar.addTitle(child.title);
+	};
+
+	TabPanel.prototype.insertChild = function (index, child) {
+		this._stackedPanel.insertChild(index, child);
+		this._tabBar.insertTitle(index, child.title);
+	};
+
+	TabPanel.prototype.findWidgetByTitle = function (title) {
+		var panel = this._stackedPanel;
+		for (var i = 0, n = panel.childCount(); i < n; ++i) {
+			var child = panel.childAt(i);
+			if (child.title === title)
+				return child;
+		}
+		return null;
+	};
+
+	TabPanel.prototype.onCurrentChanged = function (sender, args) {
+		this._stackedPanel.currentWidget = this.findWidgetByTitle(args.newValue);
+	};
+
+	TabPanel.prototype.onTabMoved = function (sender, args) {
+		var child = this._stackedPanel.childAt(args.fromIndex);
+		this._stackedPanel.insertChild(args.toIndex, child);
+	};
+
+	TabPanel.prototype.onTabCloseRequested = function (sender, title) {
+		var widget = this.findWidgetByTitle(title);
+		if (widget)
+			widget.close();
+	};
+
+	TabPanel.prototype.onWidgetRemoved = function (sender, widget) {
+		this._tabBar.removeTitle(widget.title);
 	};
 	return TabPanel;
-})(phosphor_boxpanel_1.BoxPanel);
+})(phosphor_widget_1.Widget);
 exports.TabPanel = TabPanel;
 
-},{"./tabbar":35,"phosphor-boxpanel":5,"phosphor-stackedpanel":32}],37:[function(require,module,exports){
+},{"./tabbar":35,"phosphor-boxpanel":5,"phosphor-stackedpanel":32,"phosphor-widget":39}],37:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"dup":6}],38:[function(require,module,exports){
-
-'use strict';
-var arrays = require('phosphor-arrays');
-var phosphor_signaling_1 = require('phosphor-signaling');
-
-(function (ListChangeType) {
-
-	ListChangeType[ListChangeType["Add"] = 0] = "Add";
-
-	ListChangeType[ListChangeType["Move"] = 1] = "Move";
-
-	ListChangeType[ListChangeType["Remove"] = 2] = "Remove";
-
-	ListChangeType[ListChangeType["Replace"] = 3] = "Replace";
-
-	ListChangeType[ListChangeType["Set"] = 4] = "Set";
-})(exports.ListChangeType || (exports.ListChangeType = {}));
-var ListChangeType = exports.ListChangeType;
-
-var ObservableList = (function () {
-
-	function ObservableList(items) {
-		this.internal = items ? items.slice() : [];
-	}
-	Object.defineProperty(ObservableList.prototype, "changed", {
-
-		get: function () {
-			return ObservableList.changedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(ObservableList.prototype, "length", {
-
-		get: function () {
-			return this.internal.length;
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	ObservableList.prototype.get = function (index) {
-		return this.internal[this._norm(index)];
-	};
-
-	ObservableList.prototype.contains = function (item) {
-		return this.internal.indexOf(item) !== -1;
-	};
-
-	ObservableList.prototype.indexOf = function (item) {
-		return this.internal.indexOf(item);
-	};
-
-	ObservableList.prototype.slice = function (start, end) {
-		return this.internal.slice(start, end);
-	};
-
-	ObservableList.prototype.set = function (index, item) {
-		var i = this._norm(index);
-		if (!this._check(i))
-			return void 0;
-		return this.setItem(i, item);
-	};
-
-	ObservableList.prototype.assign = function (items) {
-		return this.replaceItems(0, this.internal.length, items);
-	};
-
-	ObservableList.prototype.add = function (item) {
-		return this.addItem(this.internal.length, item);
-	};
-
-	ObservableList.prototype.insert = function (index, item) {
-		return this.addItem(this._clamp(index), item);
-	};
-
-	ObservableList.prototype.move = function (fromIndex, toIndex) {
-		var i = this._norm(fromIndex);
-		if (!this._check(i))
-			return false;
-		var j = this._norm(toIndex);
-		if (!this._check(j))
-			return false;
-		return this.moveItem(i, j);
-	};
-
-	ObservableList.prototype.remove = function (item) {
-		var i = this.internal.indexOf(item);
-		if (i !== -1)
-			this.removeItem(i);
-		return i;
-	};
-
-	ObservableList.prototype.removeAt = function (index) {
-		var i = this._norm(index);
-		if (!this._check(i))
-			return void 0;
-		return this.removeItem(i);
-	};
-
-	ObservableList.prototype.replace = function (index, count, items) {
-		return this.replaceItems(this._norm(index), this._limit(count), items);
-	};
-
-	ObservableList.prototype.clear = function () {
-		return this.replaceItems(0, this.internal.length, []);
-	};
-
-	ObservableList.prototype.addItem = function (index, item) {
-		var i = arrays.insert(this.internal, index, item);
-		this.changed.emit({
-			type: ListChangeType.Add,
-			newIndex: i,
-			newValue: item,
-			oldIndex: -1,
-			oldValue: void 0,
-		});
-		return i;
-	};
-
-	ObservableList.prototype.moveItem = function (fromIndex, toIndex) {
-		if (!arrays.move(this.internal, fromIndex, toIndex)) {
-			return false;
-		}
-		var item = this.internal[toIndex];
-		this.changed.emit({
-			type: ListChangeType.Move,
-			newIndex: toIndex,
-			newValue: item,
-			oldIndex: fromIndex,
-			oldValue: item,
-		});
-		return true;
-	};
-
-	ObservableList.prototype.removeItem = function (index) {
-		var item = arrays.removeAt(this.internal, index);
-		this.changed.emit({
-			type: ListChangeType.Remove,
-			newIndex: -1,
-			newValue: void 0,
-			oldIndex: index,
-			oldValue: item,
-		});
-		return item;
-	};
-
-	ObservableList.prototype.replaceItems = function (index, count, items) {
-		var old = (_a = this.internal).splice.apply(_a, [index, count].concat(items));
-		this.changed.emit({
-			type: ListChangeType.Replace,
-			newIndex: index,
-			newValue: items,
-			oldIndex: index,
-			oldValue: old,
-		});
-		return old;
-		var _a;
-	};
-
-	ObservableList.prototype.setItem = function (index, item) {
-		var old = this.internal[index];
-		this.internal[index] = item;
-		this.changed.emit({
-			type: ListChangeType.Set,
-			newIndex: index,
-			newValue: item,
-			oldIndex: index,
-			oldValue: old,
-		});
-		return old;
-	};
-
-	ObservableList.prototype._norm = function (i) {
-		return i < 0 ? Math.floor(i) + this.internal.length : Math.floor(i);
-	};
-
-	ObservableList.prototype._check = function (i) {
-		return i >= 0 && i < this.internal.length;
-	};
-
-	ObservableList.prototype._clamp = function (i) {
-		return Math.max(0, Math.min(this._norm(i), this.internal.length));
-	};
-
-	ObservableList.prototype._limit = function (c) {
-		return Math.max(0, Math.min(Math.floor(c), this.internal.length));
-	};
-
-	ObservableList.changedSignal = new phosphor_signaling_1.Signal();
-	return ObservableList;
-})();
-exports.ObservableList = ObservableList;
-
-},{"phosphor-arrays":37,"phosphor-signaling":27}],39:[function(require,module,exports){
-var css = ".p-Widget{box-sizing:border-box;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;overflow:hidden;cursor:default}.p-Widget.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-widget\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],40:[function(require,module,exports){
+var css = ".p-Widget{box-sizing:border-box;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;position:relative;user-select:none;overflow:hidden;cursor:default}.p-Widget.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-widget\\lib\\index.css"})); module.exports = css;
+},{"browserify-css":2}],39:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -8072,7 +7766,7 @@ __export(require('./title'));
 __export(require('./widget'));
 require('./index.css');
 
-},{"./index.css":39,"./layout":41,"./panel":42,"./title":43,"./widget":44}],41:[function(require,module,exports){
+},{"./index.css":38,"./layout":40,"./panel":41,"./title":42,"./widget":43}],40:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8232,7 +7926,7 @@ var AbstractLayout = (function (_super) {
 })(Layout);
 exports.AbstractLayout = AbstractLayout;
 
-},{"./widget":44,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27}],42:[function(require,module,exports){
+},{"./widget":43,"phosphor-messaging":23,"phosphor-properties":26,"phosphor-signaling":27}],41:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8370,14 +8064,17 @@ var PanelLayout = (function (_super) {
 })(layout_1.AbstractLayout);
 exports.PanelLayout = PanelLayout;
 
-},{"./layout":41,"./widget":44,"phosphor-arrays":45,"phosphor-messaging":23}],43:[function(require,module,exports){
+},{"./layout":40,"./widget":43,"phosphor-arrays":44,"phosphor-messaging":23}],42:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
 var phosphor_signaling_1 = require('phosphor-signaling');
 
 var Title = (function () {
-	function Title() {
+
+	function Title(options) {
+		if (options)
+			TitlePrivate.initFrom(this, options);
 	}
 	Object.defineProperty(Title.prototype, "changed", {
 
@@ -8467,9 +8164,25 @@ var TitlePrivate;
 		value: '',
 		notify: TitlePrivate.changedSignal,
 	});
+
+	function initFrom(title, options) {
+		if (options.text !== void 0) {
+			title.text = options.text;
+		}
+		if (options.icon !== void 0) {
+			title.icon = options.icon;
+		}
+		if (options.closable !== void 0) {
+			title.closable = options.closable;
+		}
+		if (options.className !== void 0) {
+			title.className = options.className;
+		}
+	}
+	TitlePrivate.initFrom = initFrom;
 })(TitlePrivate || (TitlePrivate = {}));
 
-},{"phosphor-properties":26,"phosphor-signaling":27}],44:[function(require,module,exports){
+},{"phosphor-properties":26,"phosphor-signaling":27}],43:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8590,6 +8303,9 @@ var Widget = (function (_super) {
 				phosphor_messaging_1.sendMessage(this._parent, new ChildMessage('child-removed', this));
 			}
 			this._parent = value;
+			if (this._parent && !this._parent.isDisposed) {
+				phosphor_messaging_1.sendMessage(this._parent, new ChildMessage('child-added', this));
+			}
 		},
 		enumerable: true,
 		configurable: true
@@ -8764,6 +8480,14 @@ var Widget = (function (_super) {
 				this.notifyLayout(msg);
 				this.onCloseRequest(msg);
 				break;
+			case 'child-added':
+				this.notifyLayout(msg);
+				this.onChildAdded(msg);
+				break;
+			case 'child-removed':
+				this.notifyLayout(msg);
+				this.onChildRemoved(msg);
+				break;
 			default:
 				this.notifyLayout(msg);
 				break;
@@ -8795,6 +8519,10 @@ var Widget = (function (_super) {
 	Widget.prototype.onAfterAttach = function (msg) { };
 
 	Widget.prototype.onBeforeDetach = function (msg) { };
+
+	Widget.prototype.onChildAdded = function (msg) { };
+
+	Widget.prototype.onChildRemoved = function (msg) { };
 	return Widget;
 })(phosphor_nodewrapper_1.NodeWrapper);
 exports.Widget = Widget;
@@ -8893,6 +8621,6 @@ var WidgetPrivate;
 	});
 })(WidgetPrivate || (WidgetPrivate = {}));
 
-},{"./title":43,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-signaling":27}],45:[function(require,module,exports){
+},{"./title":42,"phosphor-messaging":23,"phosphor-nodewrapper":25,"phosphor-properties":26,"phosphor-signaling":27}],44:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
 },{"dup":6}]},{},[1]);
