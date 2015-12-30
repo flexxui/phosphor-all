@@ -16,7 +16,7 @@ os.chdir(THIS_DIR)
 
 modules = ['disposable', 'messaging', 'properties', 'signaling',
            'boxengine', 'domutil', 'nodewrapper',
-           'widget', 'menus',
+           'widget', 'panel', 'menus',
            'boxpanel', 'gridpanel', 'splitpanel', 'stackedpanel', 'tabs', 'dockpanel',
            ]
 
