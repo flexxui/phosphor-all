@@ -40,7 +40,6 @@ window.phosphor.widget = require("phosphor-widget");
 window.phosphor.panel = require("phosphor-panel");
 window.phosphor.menus = require("phosphor-menus");
 window.phosphor.boxpanel = require("phosphor-boxpanel");
-window.phosphor.gridpanel = require("phosphor-gridpanel");
 window.phosphor.splitpanel = require("phosphor-splitpanel");
 window.phosphor.stackedpanel = require("phosphor-stackedpanel");
 window.phosphor.tabs = require("phosphor-tabs");
@@ -56,7 +55,7 @@ window.phosphor.createWidget = function (name) {
 	return w;
 };
 
-},{"phosphor-boxengine":3,"phosphor-boxpanel":4,"phosphor-disposable":11,"phosphor-dockpanel":13,"phosphor-domutil":17,"phosphor-gridpanel":19,"phosphor-menus":22,"phosphor-messaging":27,"phosphor-nodewrapper":29,"phosphor-panel":30,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-splitpanel":37,"phosphor-stackedpanel":41,"phosphor-tabs":45,"phosphor-widget":50}],2:[function(require,module,exports){
+},{"phosphor-boxengine":3,"phosphor-boxpanel":4,"phosphor-disposable":11,"phosphor-dockpanel":13,"phosphor-domutil":17,"phosphor-menus":20,"phosphor-messaging":25,"phosphor-nodewrapper":27,"phosphor-panel":28,"phosphor-properties":32,"phosphor-signaling":33,"phosphor-splitpanel":35,"phosphor-stackedpanel":39,"phosphor-tabs":43,"phosphor-widget":48}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -732,7 +731,7 @@ var BoxLayoutPrivate;
 	}
 })(BoxLayoutPrivate || (BoxLayoutPrivate = {}));
 
-},{"phosphor-arrays":7,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":8,"phosphor-properties":34,"phosphor-widget":50}],6:[function(require,module,exports){
+},{"phosphor-arrays":7,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":25,"phosphor-panel":8,"phosphor-properties":32,"phosphor-widget":48}],6:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -1188,7 +1187,7 @@ var PanelLayout = (function (_super) {
 })(phosphor_widget_1.AbstractLayout);
 exports.PanelLayout = PanelLayout;
 
-},{"phosphor-arrays":7,"phosphor-messaging":27,"phosphor-widget":50}],10:[function(require,module,exports){
+},{"phosphor-arrays":7,"phosphor-messaging":25,"phosphor-widget":48}],10:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -1237,7 +1236,7 @@ var Panel = (function (_super) {
 })(phosphor_widget_1.Widget);
 exports.Panel = Panel;
 
-},{"./layout":9,"phosphor-widget":50}],11:[function(require,module,exports){
+},{"./layout":9,"phosphor-widget":48}],11:[function(require,module,exports){
 
 'use strict';
 
@@ -2264,7 +2263,7 @@ var DockPanelPrivate;
 	}
 })(DockPanelPrivate || (DockPanelPrivate = {}));
 
-},{"./index.css":12,"phosphor-arrays":14,"phosphor-domutil":17,"phosphor-dragdrop":15,"phosphor-nodewrapper":29,"phosphor-properties":34,"phosphor-splitpanel":37,"phosphor-stackedpanel":41,"phosphor-tabs":45,"phosphor-widget":50}],14:[function(require,module,exports){
+},{"./index.css":12,"phosphor-arrays":14,"phosphor-domutil":17,"phosphor-dragdrop":15,"phosphor-nodewrapper":27,"phosphor-properties":32,"phosphor-splitpanel":35,"phosphor-stackedpanel":39,"phosphor-tabs":43,"phosphor-widget":48}],14:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
 },{"dup":7}],15:[function(require,module,exports){
 
@@ -2831,583 +2830,6 @@ function sizeLimits(node) {
 exports.sizeLimits = sizeLimits;
 
 },{"./index.css":16,"phosphor-disposable":11}],18:[function(require,module,exports){
-var css = ".p-GridPanel{position:relative}.p-GridPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-gridpanel\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],19:[function(require,module,exports){
-
-'use strict';
-var __extends = (this && this.__extends) || function (d, b) {
-	for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-	function __() { this.constructor = d; }
-	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var phosphor_boxengine_1 = require('phosphor-boxengine');
-var phosphor_domutil_1 = require('phosphor-domutil');
-var phosphor_messaging_1 = require('phosphor-messaging');
-var phosphor_properties_1 = require('phosphor-properties');
-var phosphor_signaling_1 = require('phosphor-signaling');
-var phosphor_widget_1 = require('phosphor-widget');
-require('./index.css');
-
-var GRID_PANEL_CLASS = 'p-GridPanel';
-
-var GridPanel = (function (_super) {
-	__extends(GridPanel, _super);
-
-	function GridPanel() {
-		_super.call(this);
-		this._box = null;
-		this._rowStarts = [];
-		this._colStarts = [];
-		this._rowSizers = [];
-		this._colSizers = [];
-		this.addClass(GRID_PANEL_CLASS);
-	}
-
-	GridPanel.getRow = function (widget) {
-		return GridPanel.rowProperty.get(widget);
-	};
-
-	GridPanel.setRow = function (widget, value) {
-		GridPanel.rowProperty.set(widget, value);
-	};
-
-	GridPanel.getColumn = function (widget) {
-		return GridPanel.columnProperty.get(widget);
-	};
-
-	GridPanel.setColumn = function (widget, value) {
-		GridPanel.columnProperty.set(widget, value);
-	};
-
-	GridPanel.getRowSpan = function (widget) {
-		return GridPanel.rowSpanProperty.get(widget);
-	};
-
-	GridPanel.setRowSpan = function (widget, value) {
-		GridPanel.rowSpanProperty.set(widget, value);
-	};
-
-	GridPanel.getColumnSpan = function (widget) {
-		return GridPanel.columnSpanProperty.get(widget);
-	};
-
-	GridPanel.setColumnSpan = function (widget, value) {
-		GridPanel.columnSpanProperty.set(widget, value);
-	};
-
-	GridPanel.prototype.dispose = function () {
-		this._rowStarts.length = 0;
-		this._colStarts.length = 0;
-		this._rowSizers.length = 0;
-		this._colSizers.length = 0;
-		_super.prototype.dispose.call(this);
-	};
-	Object.defineProperty(GridPanel.prototype, "rowSpecs", {
-
-		get: function () {
-			return GridPanel.rowSpecsProperty.get(this);
-		},
-
-		set: function (value) {
-			GridPanel.rowSpecsProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(GridPanel.prototype, "columnSpecs", {
-
-		get: function () {
-			return GridPanel.columnSpecsProperty.get(this);
-		},
-
-		set: function (value) {
-			GridPanel.columnSpecsProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(GridPanel.prototype, "rowSpacing", {
-
-		get: function () {
-			return GridPanel.rowSpacingProperty.get(this);
-		},
-
-		set: function (value) {
-			GridPanel.rowSpacingProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(GridPanel.prototype, "columnSpacing", {
-
-		get: function () {
-			return GridPanel.columnSpacingProperty.get(this);
-		},
-
-		set: function (value) {
-			GridPanel.columnSpacingProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	GridPanel.prototype.onChildAdded = function (msg) {
-		this.node.appendChild(msg.child.node);
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgAfterAttach);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	GridPanel.prototype.onChildMoved = function (msg) { };
-
-	GridPanel.prototype.onChildRemoved = function (msg) {
-		if (this.isAttached)
-			phosphor_messaging_1.sendMessage(msg.child, phosphor_widget_1.Widget.MsgBeforeDetach);
-		this.node.removeChild(msg.child.node);
-		resetGeometry(msg.child);
-	};
-
-	GridPanel.prototype.onAfterShow = function (msg) {
-		_super.prototype.onAfterShow.call(this, msg);
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	GridPanel.prototype.onAfterAttach = function (msg) {
-		_super.prototype.onAfterAttach.call(this, msg);
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	GridPanel.prototype.onChildShown = function (msg) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	GridPanel.prototype.onResize = function (msg) {
-		if (this.isVisible) {
-			var width = msg.width < 0 ? this.node.offsetWidth : msg.width;
-			var height = msg.height < 0 ? this.node.offsetHeight : msg.height;
-			this._layoutChildren(width, height);
-		}
-	};
-
-	GridPanel.prototype.onUpdateRequest = function (msg) {
-		if (this.isVisible) {
-			this._layoutChildren(this.node.offsetWidth, this.node.offsetHeight);
-		}
-	};
-
-	GridPanel.prototype.onLayoutRequest = function (msg) {
-		if (this.isAttached) {
-			this._setupGeometry();
-		}
-	};
-
-	GridPanel.prototype._setupGeometry = function () {
-
-		var minW = 0;
-		var minH = 0;
-		var maxW = Infinity;
-		var maxH = Infinity;
-
-		var rowSpecs = this.rowSpecs;
-		if (rowSpecs.length > 0) {
-			var fixed = this.rowSpacing * (rowSpecs.length - 1);
-			minH = rowSpecs.reduce(function (s, spec) { return s + spec.minSize; }, 0) + fixed;
-			maxH = rowSpecs.reduce(function (s, spec) { return s + spec.maxSize; }, 0) + fixed;
-		}
-
-		var colSpecs = this.columnSpecs;
-		if (colSpecs.length > 0) {
-			var fixed = this.columnSpacing * (colSpecs.length - 1);
-			minW = colSpecs.reduce(function (s, spec) { return s + spec.minSize; }, 0) + fixed;
-			maxW = colSpecs.reduce(function (s, spec) { return s + spec.maxSize; }, 0) + fixed;
-		}
-
-		for (var i = 0, n = this.childCount(); i < n; ++i) {
-			var widget = this.childAt(i);
-			setLimits(widget, phosphor_domutil_1.sizeLimits(widget.node));
-		}
-
-		this._rowStarts = zeros(rowSpecs.length);
-		this._colStarts = zeros(colSpecs.length);
-		this._rowSizers = rowSpecs.map(makeSizer);
-		this._colSizers = colSpecs.map(makeSizer);
-
-		this._box = phosphor_domutil_1.boxSizing(this.node);
-		minW += this._box.horizontalSum;
-		minH += this._box.verticalSum;
-		maxW += this._box.horizontalSum;
-		maxH += this._box.verticalSum;
-
-		var style = this.node.style;
-		style.minWidth = minW + 'px';
-		style.minHeight = minH + 'px';
-		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
-		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
-
-		if (this.parent)
-			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Panel.MsgLayoutRequest);
-
-		phosphor_messaging_1.sendMessage(this, phosphor_widget_1.Widget.MsgUpdateRequest);
-	};
-
-	GridPanel.prototype._layoutChildren = function (offsetWidth, offsetHeight) {
-
-		if (this.childCount() === 0) {
-			return;
-		}
-
-		var box = this._box || (this._box = phosphor_domutil_1.boxSizing(this.node));
-
-		var top = box.paddingTop;
-		var left = box.paddingLeft;
-		var width = offsetWidth - box.horizontalSum;
-		var height = offsetHeight - box.verticalSum;
-
-		if (this._rowSizers.length === 0 || this._colSizers.length === 0) {
-			for (var i = 0, n = this.childCount(); i < n; ++i) {
-				var widget = this.childAt(i);
-				var limits = getLimits(widget);
-				var w = Math.max(limits.minWidth, Math.min(width, limits.maxWidth));
-				var h = Math.max(limits.minHeight, Math.min(height, limits.maxHeight));
-				setGeometry(widget, left, top, w, h);
-			}
-			return;
-		}
-
-		var rowPos = top;
-		var rowStarts = this._rowStarts;
-		var rowSizers = this._rowSizers;
-		var rowSpacing = this.rowSpacing;
-		phosphor_boxengine_1.boxCalc(rowSizers, height - rowSpacing * (rowSizers.length - 1));
-		for (var i = 0, n = rowSizers.length; i < n; ++i) {
-			rowStarts[i] = rowPos;
-			rowPos += rowSizers[i].size + rowSpacing;
-		}
-
-		var colPos = left;
-		var colStarts = this._colStarts;
-		var colSizers = this._colSizers;
-		var colSpacing = this.columnSpacing;
-		phosphor_boxengine_1.boxCalc(colSizers, width - colSpacing * (colSizers.length - 1));
-		for (var i = 0, n = colSizers.length; i < n; ++i) {
-			colStarts[i] = colPos;
-			colPos += colSizers[i].size + colSpacing;
-		}
-
-		var maxRow = rowSizers.length - 1;
-		var maxCol = colSizers.length - 1;
-		for (var i = 0, n = this.childCount(); i < n; ++i) {
-
-			var widget = this.childAt(i);
-
-			var r1 = Math.max(0, Math.min(GridPanel.getRow(widget), maxRow));
-			var r2 = Math.min(r1 + GridPanel.getRowSpan(widget) - 1, maxRow);
-			var y = rowStarts[r1];
-			var h = rowStarts[r2] + rowSizers[r2].size - y;
-
-			var c1 = Math.max(0, Math.min(GridPanel.getColumn(widget), maxCol));
-			var c2 = Math.min(c1 + GridPanel.getColumnSpan(widget) - 1, maxCol);
-			var x = colStarts[c1];
-			var w = colStarts[c2] + colSizers[c2].size - x;
-
-			var limits = getLimits(widget);
-			w = Math.max(limits.minWidth, Math.min(w, limits.maxWidth));
-			h = Math.max(limits.minHeight, Math.min(h, limits.maxHeight));
-			setGeometry(widget, x, y, w, h);
-		}
-	};
-
-	GridPanel.prototype._onRowSpecsChanged = function (old, specs) {
-		for (var i = 0, n = old.length; i < n; ++i) {
-			if (specs.indexOf(old[i]) === -1) {
-				old[i].changed.disconnect(this._onRowSpecChanged, this);
-			}
-		}
-		for (var i = 0, n = specs.length; i < n; ++i) {
-			if (old.indexOf(specs[i]) === -1) {
-				specs[i].changed.connect(this._onRowSpecChanged, this);
-			}
-		}
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	GridPanel.prototype._onColSpecsChanged = function (old, specs) {
-		for (var i = 0, n = old.length; i < n; ++i) {
-			if (specs.indexOf(old[i]) === -1) {
-				old[i].changed.disconnect(this._onColSpecChanged, this);
-			}
-		}
-		for (var i = 0, n = specs.length; i < n; ++i) {
-			if (old.indexOf(specs[i]) === -1) {
-				specs[i].changed.connect(this._onColSpecChanged, this);
-			}
-		}
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	GridPanel.prototype._onRowSpecChanged = function (sender, args) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	GridPanel.prototype._onColSpecChanged = function (sender, args) {
-		phosphor_messaging_1.postMessage(this, phosphor_widget_1.Panel.MsgLayoutRequest);
-	};
-
-	GridPanel.rowSpecsProperty = new phosphor_properties_1.Property({
-		name: 'rowSpecs',
-		value: Object.freeze([]),
-		coerce: function (owner, value) { return Object.freeze(value ? value.slice() : []); },
-		changed: function (owner, old, value) { owner._onRowSpecsChanged(old, value); },
-	});
-
-	GridPanel.columnSpecsProperty = new phosphor_properties_1.Property({
-		name: 'columnSpecs',
-		value: Object.freeze([]),
-		coerce: function (owner, value) { return Object.freeze(value ? value.slice() : []); },
-		changed: function (owner, old, value) { owner._onColSpecsChanged(old, value); },
-	});
-
-	GridPanel.rowSpacingProperty = new phosphor_properties_1.Property({
-		name: 'rowSpacing',
-		value: 8,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: function (owner) { phosphor_messaging_1.postMessage(owner, phosphor_widget_1.Panel.MsgLayoutRequest); },
-	});
-
-	GridPanel.columnSpacingProperty = new phosphor_properties_1.Property({
-		name: 'columnSpacing',
-		value: 8,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: function (owner) { phosphor_messaging_1.postMessage(owner, phosphor_widget_1.Panel.MsgLayoutRequest); },
-	});
-
-	GridPanel.rowProperty = new phosphor_properties_1.Property({
-		name: 'row',
-		value: 0,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: onChildPropertyChanged,
-	});
-
-	GridPanel.columnProperty = new phosphor_properties_1.Property({
-		name: 'column',
-		value: 0,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		changed: onChildPropertyChanged,
-	});
-
-	GridPanel.rowSpanProperty = new phosphor_properties_1.Property({
-		name: 'rowSpan',
-		value: 1,
-		coerce: function (owner, value) { return Math.max(1, value | 0); },
-		changed: onChildPropertyChanged,
-	});
-
-	GridPanel.columnSpanProperty = new phosphor_properties_1.Property({
-		name: 'columnSpan',
-		value: 1,
-		coerce: function (owner, value) { return Math.max(1, value | 0); },
-		changed: onChildPropertyChanged,
-	});
-	return GridPanel;
-})(phosphor_widget_1.Panel);
-exports.GridPanel = GridPanel;
-
-var Spec = (function () {
-
-	function Spec(options) {
-		if (options === void 0) { options = {}; }
-		if (options.sizeBasis !== void 0) {
-			this.sizeBasis = options.sizeBasis;
-		}
-		if (options.minSize !== void 0) {
-			this.minSize = options.minSize;
-		}
-		if (options.maxSize !== void 0) {
-			this.maxSize = options.maxSize;
-		}
-		if (options.stretch !== void 0) {
-			this.stretch = options.stretch;
-		}
-	}
-	Object.defineProperty(Spec.prototype, "changed", {
-
-		get: function () {
-			return Spec.changedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Spec.prototype, "sizeBasis", {
-
-		get: function () {
-			return Spec.sizeBasisProperty.get(this);
-		},
-
-		set: function (value) {
-			Spec.sizeBasisProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Spec.prototype, "minSize", {
-
-		get: function () {
-			return Spec.minSizeProperty.get(this);
-		},
-
-		set: function (value) {
-			Spec.minSizeProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Spec.prototype, "maxSize", {
-
-		get: function () {
-			return Spec.maxSizeProperty.get(this);
-		},
-
-		set: function (value) {
-			Spec.maxSizeProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(Spec.prototype, "stretch", {
-
-		get: function () {
-			return Spec.stretchProperty.get(this);
-		},
-
-		set: function (value) {
-			Spec.stretchProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	Spec.changedSignal = new phosphor_signaling_1.Signal();
-
-	Spec.sizeBasisProperty = new phosphor_properties_1.Property({
-		name: 'sizeBasis',
-		value: 0,
-		notify: Spec.changedSignal,
-	});
-
-	Spec.minSizeProperty = new phosphor_properties_1.Property({
-		name: 'minSize',
-		value: 0,
-		coerce: function (owner, value) { return Math.max(0, value); },
-		notify: Spec.changedSignal,
-	});
-
-	Spec.maxSizeProperty = new phosphor_properties_1.Property({
-		name: 'maxSize',
-		value: Infinity,
-		coerce: function (owner, value) { return Math.max(0, value); },
-		notify: Spec.changedSignal,
-	});
-
-	Spec.stretchProperty = new phosphor_properties_1.Property({
-		name: 'stretch',
-		value: 1,
-		coerce: function (owner, value) { return Math.max(0, value | 0); },
-		notify: Spec.changedSignal,
-	});
-	return Spec;
-})();
-exports.Spec = Spec;
-
-var rectProperty = new phosphor_properties_1.Property({
-	name: 'rect',
-	create: createRect,
-});
-
-var limitsProperty = new phosphor_properties_1.Property({
-	name: 'limits',
-	create: function (owner) { return phosphor_domutil_1.sizeLimits(owner.node); },
-});
-
-function createRect() {
-	return { top: NaN, left: NaN, width: NaN, height: NaN };
-}
-
-function getRect(widget) {
-	return rectProperty.get(widget);
-}
-
-function getLimits(widget) {
-	return limitsProperty.get(widget);
-}
-
-function setLimits(widget, value) {
-	return limitsProperty.set(widget, value);
-}
-
-function setGeometry(widget, left, top, width, height) {
-	var resized = false;
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	if (rect.top !== top) {
-		rect.top = top;
-		style.top = top + 'px';
-	}
-	if (rect.left !== left) {
-		rect.left = left;
-		style.left = left + 'px';
-	}
-	if (rect.width !== width) {
-		resized = true;
-		rect.width = width;
-		style.width = width + 'px';
-	}
-	if (rect.height !== height) {
-		resized = true;
-		rect.height = height;
-		style.height = height + 'px';
-	}
-	if (resized) {
-		phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
-	}
-}
-
-function resetGeometry(widget) {
-	var rect = getRect(widget);
-	var style = widget.node.style;
-	rect.top = NaN;
-	rect.left = NaN;
-	rect.width = NaN;
-	rect.height = NaN;
-	style.top = '';
-	style.left = '';
-	style.width = '';
-	style.height = '';
-}
-
-function onChildPropertyChanged(child) {
-	if (child.parent instanceof GridPanel) {
-		phosphor_messaging_1.postMessage(child.parent, phosphor_widget_1.Widget.MsgUpdateRequest);
-	}
-}
-
-function zeros(n) {
-	var arr = new Array(n);
-	for (var i = 0; i < n; ++i)
-		arr[i] = 0;
-	return arr;
-}
-
-function makeSizer(spec) {
-	var sizer = new phosphor_boxengine_1.BoxSizer();
-	sizer.sizeHint = spec.sizeBasis;
-	sizer.minSize = spec.minSize;
-	sizer.maxSize = spec.maxSize;
-	sizer.stretch = spec.stretch;
-	sizer.maxSize = Math.max(sizer.minSize, sizer.maxSize);
-	return sizer;
-}
-
-},{"./index.css":18,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-widget":50}],20:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -3514,9 +2936,9 @@ var AbstractMenu = (function (_super) {
 })(phosphor_widget_1.Widget);
 exports.AbstractMenu = AbstractMenu;
 
-},{"phosphor-arrays":26,"phosphor-widget":50}],21:[function(require,module,exports){
+},{"phosphor-arrays":24,"phosphor-widget":48}],19:[function(require,module,exports){
 var css = ".p-MenuBar-content{margin:0;padding:0;display:flex;flex-direction:row;list-style-type:none}.p-MenuBar-item{box-sizing:border-box}.p-MenuBar-item.p-mod-hidden{display:none}.p-Menu{position:absolute;white-space:nowrap;overflow-x:hidden;overflow-y:auto}.p-Menu-content{margin:0;padding:0;display:table;list-style-type:none}.p-Menu-item{display:table-row}.p-Menu-item.p-mod-hidden{display:none}.p-Menu-itemIcon,.p-Menu-itemSubmenuIcon{display:table-cell;text-align:center}.p-Menu-itemText{display:table-cell;text-align:left}.p-Menu-itemShortcut{display:table-cell;text-align:right}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-menus\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],22:[function(require,module,exports){
+},{"browserify-css":2}],20:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -3528,7 +2950,7 @@ __export(require('./menubar'));
 __export(require('./menuitem'));
 require('./index.css');
 
-},{"./base":20,"./index.css":21,"./menu":23,"./menubar":24,"./menuitem":25}],23:[function(require,module,exports){
+},{"./base":18,"./index.css":19,"./menu":21,"./menubar":22,"./menuitem":23}],21:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -4194,7 +3616,7 @@ var MenuPrivate;
 	}
 })(MenuPrivate || (MenuPrivate = {}));
 
-},{"./base":20,"./menuitem":25,"phosphor-arrays":26,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-signaling":35,"phosphor-widget":50}],24:[function(require,module,exports){
+},{"./base":18,"./menuitem":23,"phosphor-arrays":24,"phosphor-domutil":17,"phosphor-messaging":25,"phosphor-signaling":33,"phosphor-widget":48}],22:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -4673,7 +4095,7 @@ var MenuBarPrivate;
 	MenuBarPrivate.hideUselessItems = hideUselessItems;
 })(MenuBarPrivate || (MenuBarPrivate = {}));
 
-},{"./base":20,"./menuitem":25,"phosphor-arrays":26,"phosphor-domutil":17}],25:[function(require,module,exports){
+},{"./base":18,"./menuitem":23,"phosphor-arrays":24,"phosphor-domutil":17}],23:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
@@ -4926,9 +4348,9 @@ var MenuItemPrivate;
 	MenuItemPrivate.initFrom = initFrom;
 })(MenuItemPrivate || (MenuItemPrivate = {}));
 
-},{"phosphor-properties":34,"phosphor-signaling":35}],26:[function(require,module,exports){
+},{"phosphor-properties":32,"phosphor-signaling":33}],24:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],27:[function(require,module,exports){
+},{"dup":7}],25:[function(require,module,exports){
 
 'use strict';
 var phosphor_queue_1 = require('phosphor-queue');
@@ -5172,7 +4594,7 @@ var MessageDispatcher = (function () {
 	return MessageDispatcher;
 })();
 
-},{"phosphor-queue":28}],28:[function(require,module,exports){
+},{"phosphor-queue":26}],26:[function(require,module,exports){
 
 'use strict';
 
@@ -5360,7 +4782,7 @@ var Queue = (function () {
 })();
 exports.Queue = Queue;
 
-},{}],29:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 
 'use strict';
 
@@ -5430,9 +4852,9 @@ var NodeWrapper = (function () {
 })();
 exports.NodeWrapper = NodeWrapper;
 
-},{}],30:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
-},{"./layout":31,"./panel":32,"dup":4}],31:[function(require,module,exports){
+},{"./layout":29,"./panel":30,"dup":4}],29:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -5535,11 +4957,11 @@ var PanelLayout = (function (_super) {
 })(phosphor_widget_1.AbstractLayout);
 exports.PanelLayout = PanelLayout;
 
-},{"phosphor-arrays":33,"phosphor-messaging":27,"phosphor-widget":50}],32:[function(require,module,exports){
+},{"phosphor-arrays":31,"phosphor-messaging":25,"phosphor-widget":48}],30:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"./layout":31,"dup":10,"phosphor-widget":50}],33:[function(require,module,exports){
+},{"./layout":29,"dup":10,"phosphor-widget":48}],31:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],34:[function(require,module,exports){
+},{"dup":7}],32:[function(require,module,exports){
 
 'use strict';
 
@@ -5663,7 +5085,7 @@ function lookupHash(owner) {
 	return hash;
 }
 
-},{}],35:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 
 'use strict';
 
@@ -5944,9 +5366,9 @@ function removeFromSendersList(conn) {
 	conn.nextSender = null;
 }
 
-},{}],36:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var css = ".p-SplitPanel,.p-SplitPanel-child{z-index:0}.p-SplitPanel-handle{z-index:1}.p-SplitPanel-handle.p-mod-hidden{display:none}.p-SplitPanel-handle:after{position:absolute;top:0;left:0;width:100%;height:100%;content:''}.p-SplitPanel.p-mod-horizontal>.p-SplitPanel-handle{cursor:ew-resize}.p-SplitPanel.p-mod-vertical>.p-SplitPanel-handle{cursor:ns-resize}.p-SplitPanel.p-mod-horizontal>.p-SplitPanel-handle:after{left:50%;min-width:7px;transform:translateX(-50%)}.p-SplitPanel.p-mod-vertical>.p-SplitPanel-handle:after{top:50%;min-height:7px;transform:translateY(-50%)}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-splitpanel\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],37:[function(require,module,exports){
+},{"browserify-css":2}],35:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -5956,7 +5378,7 @@ __export(require('./layout'));
 __export(require('./panel'));
 require('./index.css');
 
-},{"./index.css":36,"./layout":38,"./panel":39}],38:[function(require,module,exports){
+},{"./index.css":34,"./layout":36,"./panel":37}],36:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6563,7 +5985,7 @@ var SplitLayoutPrivate;
 	}
 })(SplitLayoutPrivate || (SplitLayoutPrivate = {}));
 
-},{"phosphor-arrays":40,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":30,"phosphor-properties":34,"phosphor-widget":50}],39:[function(require,module,exports){
+},{"phosphor-arrays":38,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":25,"phosphor-panel":28,"phosphor-properties":32,"phosphor-widget":48}],37:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6813,11 +6235,11 @@ var SplitPanelPrivate;
 	SplitPanelPrivate.findHandle = findHandle;
 })(SplitPanelPrivate || (SplitPanelPrivate = {}));
 
-},{"./layout":38,"phosphor-domutil":17,"phosphor-panel":30}],40:[function(require,module,exports){
+},{"./layout":36,"phosphor-domutil":17,"phosphor-panel":28}],38:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],41:[function(require,module,exports){
+},{"dup":7}],39:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
-},{"./layout":42,"./panel":43,"dup":4}],42:[function(require,module,exports){
+},{"./layout":40,"./panel":41,"dup":4}],40:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -7038,7 +6460,7 @@ var StackedLayoutPrivate;
 	});
 })(StackedLayoutPrivate || (StackedLayoutPrivate = {}));
 
-},{"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":30,"phosphor-properties":34,"phosphor-widget":50}],43:[function(require,module,exports){
+},{"phosphor-domutil":17,"phosphor-messaging":25,"phosphor-panel":28,"phosphor-properties":32,"phosphor-widget":48}],41:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -7092,9 +6514,9 @@ var StackedPanelPrivate;
 	StackedPanelPrivate.widgetRemovedSignal = new phosphor_signaling_1.Signal();
 })(StackedPanelPrivate || (StackedPanelPrivate = {}));
 
-},{"./layout":42,"phosphor-panel":30,"phosphor-signaling":35}],44:[function(require,module,exports){
+},{"./layout":40,"phosphor-panel":28,"phosphor-signaling":33}],42:[function(require,module,exports){
 var css = ".p-TabBar{display:flex;flex-direction:column}.p-TabBar-footer,.p-TabBar-header{flex:0 0 auto}.p-TabBar-body{display:flex;flex-direction:row;flex:1 1 auto}.p-TabBar-content{display:flex;flex-direction:row;flex:1 1 auto;margin:0;padding:0;list-style-type:none}.p-TabBar-tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-TabBar-tabCloseIcon,.p-TabBar-tabIcon{flex:0 0 auto}.p-TabBar-tabText{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging .p-TabBar-tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging .p-TabBar-tab.p-mod-dragging{transition:none}.p-TabPanel-tabBar{z-index:1}.p-TabPanel-stackedPanel{z-index:0}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-tabs\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],45:[function(require,module,exports){
+},{"browserify-css":2}],43:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -7104,7 +6526,7 @@ __export(require('./tabbar'));
 __export(require('./tabpanel'));
 require('./index.css');
 
-},{"./index.css":44,"./tabbar":46,"./tabpanel":47}],46:[function(require,module,exports){
+},{"./index.css":42,"./tabbar":44,"./tabpanel":45}],44:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -7790,7 +7212,7 @@ var TabBarPrivate;
 	TabBarPrivate.resetTabPositions = resetTabPositions;
 })(TabBarPrivate || (TabBarPrivate = {}));
 
-},{"phosphor-arrays":48,"phosphor-domutil":17,"phosphor-signaling":35,"phosphor-widget":50}],47:[function(require,module,exports){
+},{"phosphor-arrays":46,"phosphor-domutil":17,"phosphor-signaling":33,"phosphor-widget":48}],45:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -7944,11 +7366,11 @@ var TabPanel = (function (_super) {
 })(phosphor_widget_1.Widget);
 exports.TabPanel = TabPanel;
 
-},{"./tabbar":46,"phosphor-boxpanel":4,"phosphor-stackedpanel":41,"phosphor-widget":50}],48:[function(require,module,exports){
+},{"./tabbar":44,"phosphor-boxpanel":4,"phosphor-stackedpanel":39,"phosphor-widget":48}],46:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],49:[function(require,module,exports){
+},{"dup":7}],47:[function(require,module,exports){
 var css = ".p-Widget{box-sizing:border-box;position:relative;overflow:hidden;cursor:default;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.p-Widget.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-widget\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],50:[function(require,module,exports){
+},{"browserify-css":2}],48:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -7959,7 +7381,7 @@ __export(require('./title'));
 __export(require('./widget'));
 require('./index.css');
 
-},{"./index.css":49,"./layout":51,"./title":52,"./widget":53}],51:[function(require,module,exports){
+},{"./index.css":47,"./layout":49,"./title":50,"./widget":51}],49:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8119,7 +7541,7 @@ var AbstractLayout = (function (_super) {
 })(Layout);
 exports.AbstractLayout = AbstractLayout;
 
-},{"./widget":53,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35}],52:[function(require,module,exports){
+},{"./widget":51,"phosphor-messaging":25,"phosphor-properties":32,"phosphor-signaling":33}],50:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
@@ -8237,7 +7659,7 @@ var TitlePrivate;
 	TitlePrivate.initFrom = initFrom;
 })(TitlePrivate || (TitlePrivate = {}));
 
-},{"phosphor-properties":34,"phosphor-signaling":35}],53:[function(require,module,exports){
+},{"phosphor-properties":32,"phosphor-signaling":33}],51:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8675,4 +8097,4 @@ var WidgetPrivate;
 	});
 })(WidgetPrivate || (WidgetPrivate = {}));
 
-},{"./title":52,"phosphor-messaging":27,"phosphor-nodewrapper":29,"phosphor-properties":34,"phosphor-signaling":35}]},{},[1]);
+},{"./title":50,"phosphor-messaging":25,"phosphor-nodewrapper":27,"phosphor-properties":32,"phosphor-signaling":33}]},{},[1]);
