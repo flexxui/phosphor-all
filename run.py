@@ -35,6 +35,8 @@ package = """
 }
 """.strip()
 
+# todo: make a createPanel function
+
 CODE = """
 window.phosphor.createWidget = function (name) {
     var ori = phosphor.widget.Widget.createNode;
@@ -46,6 +48,9 @@ window.phosphor.createWidget = function (name) {
     return w;
 };
 """
+
+LICENSE = '/*\n%s\n*/\n' % open('phosphor_license.txt', 'rb').read().decode().strip()
+
 
 def check_call(cmd, **kwargs):
     kwargs['cwd'] = THIS_DIR
@@ -78,6 +83,8 @@ check_call(['browserify', '-g', '[', 'browserify-css', '--minify=true', ']',
 # check_call(['uglify', '-s', 'phosphor-all.js', '-o', 'phosphor-all.min.js'])
 # todo: uglify is broken on windows?
 
-# Strip comments in non-minified
+# Strip comments in non-minified, and add license text once
 text = open('phosphor-all.js', 'rt').read()
-open('phosphor-all.js', 'wt').write(minify(text, False))
+text = minify(text, False)
+text = LICENSE + text
+open('phosphor-all.js', 'wt').write(text)

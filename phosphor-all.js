@@ -1,3 +1,32 @@
+/*
+Copyright (c) 2014-2016, PhosphorJS Contributors
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 window.phosphor = {};
 window.phosphor.disposable = require("phosphor-disposable");
@@ -27,7 +56,7 @@ window.phosphor.createWidget = function (name) {
 	return w;
 };
 
-},{"phosphor-boxengine":3,"phosphor-boxpanel":4,"phosphor-disposable":11,"phosphor-dockpanel":13,"phosphor-domutil":17,"phosphor-gridpanel":19,"phosphor-menus":21,"phosphor-messaging":27,"phosphor-nodewrapper":29,"phosphor-panel":30,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-splitpanel":37,"phosphor-stackedpanel":45,"phosphor-tabs":47,"phosphor-widget":52}],2:[function(require,module,exports){
+},{"phosphor-boxengine":3,"phosphor-boxpanel":4,"phosphor-disposable":11,"phosphor-dockpanel":13,"phosphor-domutil":17,"phosphor-gridpanel":19,"phosphor-menus":22,"phosphor-messaging":27,"phosphor-nodewrapper":29,"phosphor-panel":30,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-splitpanel":37,"phosphor-stackedpanel":41,"phosphor-tabs":45,"phosphor-widget":50}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -703,7 +732,7 @@ var BoxLayoutPrivate;
 	}
 })(BoxLayoutPrivate || (BoxLayoutPrivate = {}));
 
-},{"phosphor-arrays":7,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":8,"phosphor-properties":34,"phosphor-widget":52}],6:[function(require,module,exports){
+},{"phosphor-arrays":7,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":8,"phosphor-properties":34,"phosphor-widget":50}],6:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -1159,7 +1188,7 @@ var PanelLayout = (function (_super) {
 })(phosphor_widget_1.AbstractLayout);
 exports.PanelLayout = PanelLayout;
 
-},{"phosphor-arrays":7,"phosphor-messaging":27,"phosphor-widget":52}],10:[function(require,module,exports){
+},{"phosphor-arrays":7,"phosphor-messaging":27,"phosphor-widget":50}],10:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -1208,7 +1237,7 @@ var Panel = (function (_super) {
 })(phosphor_widget_1.Widget);
 exports.Panel = Panel;
 
-},{"./layout":9,"phosphor-widget":52}],11:[function(require,module,exports){
+},{"./layout":9,"phosphor-widget":50}],11:[function(require,module,exports){
 
 'use strict';
 
@@ -1347,11 +1376,6 @@ var EDGE_SIZE = 30;
 var DockPanel = (function (_super) {
 	__extends(DockPanel, _super);
 
-
-
-
-
-
 	function DockPanel() {
 		_super.call(this);
 		this.addClass(DOCK_PANEL_CLASS);
@@ -1392,6 +1416,10 @@ var DockPanel = (function (_super) {
 
 	DockPanel.prototype.insertTabAfter = function (widget, ref) {
 		DockPanelPrivate.insertTab(this, widget, ref, true);
+	};
+
+	DockPanel.prototype.selectWidget = function (widget) {
+		DockPanelPrivate.selectWidget(this, widget);
 	};
 
 	DockPanel.prototype.handleEvent = function (event) {
@@ -1494,56 +1522,9 @@ var DockTabPanel = (function (_super) {
 
 	function DockTabPanel() {
 		_super.call(this);
-		this._drag = null;
 		this.addClass(TAB_PANEL_CLASS);
 		this.tabBar.tabsMovable = true;
-		this.tabBar.tabDetachRequested.connect(this._onTabDetachRequested, this);
 	}
-
-	DockTabPanel.prototype.dispose = function () {
-		if (this._drag) {
-			this._drag.dispose();
-			this._drag = null;
-		}
-		_super.prototype.dispose.call(this);
-	};
-
-	DockTabPanel.prototype.onWidgetRemoved = function (sender, child) {
-		_super.prototype.onWidgetRemoved.call(this, sender, child);
-		if (sender.childCount() === 0) {
-			DockPanelPrivate.removeTabPanel(this);
-		}
-	};
-
-	DockTabPanel.prototype._onTabDetachRequested = function (sender, args) {
-		var _this = this;
-
-		if (this._drag) {
-			return;
-		}
-
-		sender.releaseMouse();
-
-		var mimeData = new phosphor_dragdrop_1.MimeData();
-		var widget = this.findWidgetByTitle(args.title);
-		mimeData.setData(FACTORY_MIME, function () { return widget; });
-
-		var tab = args.node;
-		var dragImage = tab.cloneNode(true);
-
-		this._drag = new phosphor_dragdrop_1.Drag({
-			mimeData: mimeData,
-			dragImage: dragImage,
-			proposedAction: phosphor_dragdrop_1.DropAction.Move,
-			supportedActions: phosphor_dragdrop_1.DropActions.Move,
-		});
-
-		tab.classList.add(HIDDEN_CLASS);
-		this._drag.start(args.clientX, args.clientY).then(function () {
-			_this._drag = null;
-			tab.classList.remove(HIDDEN_CLASS);
-		});
-	};
 	return DockTabPanel;
 })(phosphor_tabs_1.TabPanel);
 
@@ -1634,7 +1615,7 @@ var DockPanelPrivate;
 
 		widget.parent = null;
 
-		var tabPanel = new DockTabPanel();
+		var tabPanel = createTabPanel();
 		tabPanel.addChild(widget);
 
 		if (!getRoot(owner)) {
@@ -1730,87 +1711,12 @@ var DockPanelPrivate;
 	}
 	DockPanelPrivate.insertTab = insertTab;
 
-	function removeTabPanel(tabPanel) {
-
-		if (tabPanel.childCount() !== 0) {
-			internalError();
-		}
-
-		if (tabPanel.parent instanceof DockPanel) {
-			setRoot(tabPanel.parent, null);
-			tabPanel.dispose();
+	function selectWidget(owner, widget) {
+		if (!dockPanelContains(owner, widget))
 			return;
-		}
-
-		if (!(tabPanel.parent instanceof DockSplitPanel)) {
-			internalError();
-		}
-
-		var splitPanel = tabPanel.parent;
-
-		if (splitPanel.childCount() < 2) {
-			internalError();
-		}
-
-		tabPanel.dispose();
-
-
-		if (splitPanel.childCount() > 1) {
-			return;
-		}
-
-		var child = splitPanel.childAt(0);
-
-		if (!(child instanceof DockTabPanel) && !(child instanceof DockSplitPanel)) {
-			internalError();
-		}
-
-		if (splitPanel.parent instanceof DockPanel) {
-			setRoot(splitPanel.parent, child);
-			splitPanel.dispose();
-			return;
-		}
-
-		if (!(splitPanel.parent instanceof DockSplitPanel)) {
-			internalError();
-		}
-
-		var grandPanel = splitPanel.parent;
-
-		if (child instanceof DockTabPanel) {
-			var sizes = grandPanel.sizes();
-			var index_1 = grandPanel.childIndex(splitPanel);
-			splitPanel.parent = null;
-			grandPanel.insertChild(index_1, child);
-			grandPanel.setSizes(sizes);
-			splitPanel.dispose();
-			return;
-		}
-
-		var childSplit = child;
-
-
-		if (childSplit.orientation !== grandPanel.orientation) {
-			internalError();
-		}
-
-
-		var index = grandPanel.childIndex(splitPanel);
-		var childSizes = childSplit.sizes();
-		var grandSizes = grandPanel.sizes();
-
-		splitPanel.parent = null;
-		var sizeShare = arrays.removeAt(grandSizes, index);
-
-		for (var i = 0; childSplit.childCount() !== 0; ++i) {
-			grandPanel.insertChild(index + i, childSplit.childAt(0));
-			arrays.insert(grandSizes, index + i, sizeShare * childSizes[i]);
-		}
-
-		grandPanel.setSizes(grandSizes);
-		splitPanel.dispose();
+		widget.parent.parent.currentWidget = widget;
 	}
-	DockPanelPrivate.removeTabPanel = removeTabPanel;
+	DockPanelPrivate.selectWidget = selectWidget;
 
 	function hideOverlay(owner) {
 		getOverlay(owner).hide();
@@ -1988,7 +1894,7 @@ var DockPanelPrivate;
 				return;
 			case 9 :
 				owner.insertTabAfter(widget, ref);
-				selectWidget(widget);
+				selectWidget(owner, widget);
 				return;
 		}
 	}
@@ -2022,7 +1928,7 @@ var DockPanelPrivate;
 			return;
 		var layout = owner.layout;
 		layout.addChild(root);
-		layout.currentWidget = root;
+		root.show();
 	}
 
 	function createOverlay(owner) {
@@ -2103,7 +2009,7 @@ var DockPanelPrivate;
 	function ensureFirstTabPanel(owner) {
 		var tabs = findFirstTabPanel(owner);
 		if (!tabs) {
-			tabs = new DockTabPanel();
+			tabs = createTabPanel();
 			setRoot(owner, tabs);
 		}
 		return tabs;
@@ -2126,19 +2032,7 @@ var DockPanelPrivate;
 		var newRoot = new DockSplitPanel(orientation, owner.spacing);
 		newRoot.addChild(oldRoot);
 		setRoot(owner, newRoot);
-		oldRoot.show();
 		return newRoot;
-	}
-
-	function selectWidget(widget) {
-		var stack = widget.parent;
-		if (!stack) {
-			return;
-		}
-		var tabs = stack.parent;
-		if (tabs instanceof DockTabPanel) {
-			tabs.currentWidget = widget;
-		}
 	}
 
 	function validateInsertArgs(owner, widget, ref) {
@@ -2243,9 +2137,134 @@ var DockPanelPrivate;
 		}
 		return zone;
 	}
+
+	var currentDrag = null;
+
+	function createTabPanel() {
+		var panel = new DockTabPanel();
+		panel.tabBar.tabDetachRequested.connect(onTabDetachRequested);
+		panel.stackedPanel.widgetRemoved.connect(onWidgetRemoved);
+		return panel;
+	}
+
+	function removeTabPanel(tabPanel) {
+
+		if (tabPanel.childCount() !== 0) {
+			internalError();
+		}
+
+		if (tabPanel.parent instanceof DockPanel) {
+			setRoot(tabPanel.parent, null);
+			tabPanel.dispose();
+			return;
+		}
+
+		if (!(tabPanel.parent instanceof DockSplitPanel)) {
+			internalError();
+		}
+
+		var splitPanel = tabPanel.parent;
+
+		if (splitPanel.childCount() < 2) {
+			internalError();
+		}
+
+		tabPanel.dispose();
+
+
+		if (splitPanel.childCount() > 1) {
+			return;
+		}
+
+		var child = splitPanel.childAt(0);
+
+		if (!(child instanceof DockTabPanel) && !(child instanceof DockSplitPanel)) {
+			internalError();
+		}
+
+		if (splitPanel.parent instanceof DockPanel) {
+			setRoot(splitPanel.parent, child);
+			splitPanel.dispose();
+			return;
+		}
+
+		if (!(splitPanel.parent instanceof DockSplitPanel)) {
+			internalError();
+		}
+
+		var grandPanel = splitPanel.parent;
+
+		if (child instanceof DockTabPanel) {
+			var sizes = grandPanel.sizes();
+			var index_1 = grandPanel.childIndex(splitPanel);
+			splitPanel.parent = null;
+			grandPanel.insertChild(index_1, child);
+			grandPanel.setSizes(sizes);
+			splitPanel.dispose();
+			return;
+		}
+
+		var childSplit = child;
+
+
+		if (childSplit.orientation !== grandPanel.orientation) {
+			internalError();
+		}
+
+
+		var index = grandPanel.childIndex(splitPanel);
+		var childSizes = childSplit.sizes();
+		var grandSizes = grandPanel.sizes();
+
+		splitPanel.parent = null;
+		var sizeShare = arrays.removeAt(grandSizes, index);
+
+		for (var i = 0; childSplit.childCount() !== 0; ++i) {
+			grandPanel.insertChild(index + i, childSplit.childAt(0));
+			arrays.insert(grandSizes, index + i, sizeShare * childSizes[i]);
+		}
+
+		grandPanel.setSizes(grandSizes);
+		splitPanel.dispose();
+	}
+
+	function onTabDetachRequested(sender, args) {
+
+		if (currentDrag) {
+			return;
+		}
+
+		sender.releaseMouse();
+
+		var mimeData = new phosphor_dragdrop_1.MimeData();
+		var widget = args.item;
+		mimeData.setData(FACTORY_MIME, function () { return widget; });
+
+		var tab = sender.tabAt(args.index);
+		var dragImage = tab.cloneNode(true);
+
+		currentDrag = new phosphor_dragdrop_1.Drag({
+			mimeData: mimeData,
+			dragImage: dragImage,
+			proposedAction: phosphor_dragdrop_1.DropAction.Move,
+			supportedActions: phosphor_dragdrop_1.DropActions.Move,
+		});
+
+		tab.classList.add(HIDDEN_CLASS);
+		currentDrag.start(args.clientX, args.clientY).then(function () {
+			currentDrag = null;
+			tab.classList.remove(HIDDEN_CLASS);
+		});
+	}
+
+	function onWidgetRemoved(sender, widget) {
+		if (sender.childCount() === 0) {
+			removeTabPanel(sender.parent);
+		}
+	}
 })(DockPanelPrivate || (DockPanelPrivate = {}));
 
-},{"./index.css":12,"phosphor-arrays":14,"phosphor-domutil":17,"phosphor-dragdrop":15,"phosphor-nodewrapper":29,"phosphor-properties":34,"phosphor-splitpanel":37,"phosphor-stackedpanel":45,"phosphor-tabs":47,"phosphor-widget":52}],14:[function(require,module,exports){
+},{"./index.css":12,"phosphor-arrays":14,"phosphor-domutil":17,"phosphor-dragdrop":15,"phosphor-nodewrapper":29,"phosphor-properties":34,"phosphor-splitpanel":37,"phosphor-stackedpanel":41,"phosphor-tabs":45,"phosphor-widget":50}],14:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
 },{"dup":7}],15:[function(require,module,exports){
 
@@ -3388,21 +3407,7 @@ function makeSizer(spec) {
 	return sizer;
 }
 
-},{"./index.css":18,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-widget":52}],20:[function(require,module,exports){
-var css = ".p-MenuBar-content{margin:0;padding:0;display:flex;flex-direction:row;list-style-type:none}.p-MenuBar-item{box-sizing:border-box}.p-MenuBar-item.p-mod-collapsed,.p-MenuBar-item.p-mod-hidden{display:none}.p-Menu{position:absolute;top:0;left:0;padding:3px 0;white-space:nowrap;overflow-x:hidden;overflow-y:auto;z-index:100000}.p-Menu-content{display:table;width:100%;margin:0;padding:0;border-spacing:0;list-style-type:none}.p-Menu-item{display:table-row}.p-Menu-item.p-mod-collapsed{display:none}.p-Menu-item>span{display:table-cell;padding-top:4px;padding-bottom:4px}.p-Menu-item-icon{width:21px;padding-left:2px;padding-right:2px;text-align:center}.p-Menu-item-text{padding-left:2px;padding-right:35px}.p-Menu-item-shortcut{text-align:right}.p-Menu-item-submenu{width:16px;text-align:center}.p-Menu-item.p-mod-separator-type>span{padding:0;height:9px;line-height:0;text-indent:100%;overflow:hidden;whitespace:nowrap;vertical-align:top}.p-Menu-item.p-mod-separator-type>span::after{content:'';display:block;position:relative;top:4px}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-menus\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],21:[function(require,module,exports){
-
-'use strict';
-function __export(m) {
-	for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
-__export(require('./menu'));
-__export(require('./menubar'));
-__export(require('./menubase'));
-__export(require('./menuitem'));
-require('./index.css');
-
-},{"./index.css":20,"./menu":22,"./menubar":23,"./menubase":24,"./menuitem":25}],22:[function(require,module,exports){
+},{"./index.css":18,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-widget":50}],20:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -3410,11 +3415,133 @@ var __extends = (this && this.__extends) || function (d, b) {
 	function __() { this.constructor = d; }
 	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var arrays = require('phosphor-arrays');
+var phosphor_widget_1 = require('phosphor-widget');
+
+var AbstractMenu = (function (_super) {
+	__extends(AbstractMenu, _super);
+	function AbstractMenu() {
+		_super.apply(this, arguments);
+		this._activeIndex = -1;
+		this._items = Object.freeze([]);
+	}
+	Object.defineProperty(AbstractMenu.prototype, "items", {
+
+		get: function () {
+			return this._items;
+		},
+
+		set: function (value) {
+			if (this._items === value) {
+				return;
+			}
+			this._activeIndex = -1;
+			var oldItems = this._items;
+			this._items = Object.freeze(value.slice());
+			this.onItemsChanged(oldItems, this._items);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(AbstractMenu.prototype, "activeIndex", {
+
+		get: function () {
+			return this._activeIndex;
+		},
+
+		set: function (value) {
+			var newIndex = value | 0;
+			var item = this._items[newIndex];
+			if (!item || !this.isSelectable(item)) {
+				newIndex = -1;
+			}
+			var oldIndex = this._activeIndex;
+			if (oldIndex === newIndex) {
+				return;
+			}
+			this._activeIndex = newIndex;
+			this.onActiveIndexChanged(oldIndex, newIndex);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(AbstractMenu.prototype, "activeItem", {
+
+		get: function () {
+			return this._items[this._activeIndex] || null;
+		},
+
+		set: function (value) {
+			this.activeIndex = this._items.indexOf(value);
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	AbstractMenu.prototype.activateNextItem = function () {
+		var _this = this;
+		var k = this.activeIndex + 1;
+		var i = k >= this.items.length ? 0 : k;
+		var pred = function (item) { return _this.isSelectable(item); };
+		this.activeIndex = arrays.findIndex(this.items, pred, i, true);
+	};
+
+	AbstractMenu.prototype.activatePreviousItem = function () {
+		var _this = this;
+		var k = this.activeIndex;
+		var i = k <= 0 ? this.items.length - 1 : k - 1;
+		var pred = function (item) { return _this.isSelectable(item); };
+		this.activeIndex = arrays.rfindIndex(this.items, pred, i, true);
+	};
+
+	AbstractMenu.prototype.activateMnemonicItem = function (char) {
+		var _this = this;
+		var c = char.toUpperCase();
+		var k = this.activeIndex + 1;
+		var i = k >= this.items.length ? 0 : k;
+		this.activeIndex = arrays.findIndex(this.items, function (item) {
+			if (!_this.isSelectable(item)) {
+				return false;
+			}
+			var match = item.text.match(/&\w/);
+			if (!match) {
+				return false;
+			}
+			return match[0][1].toUpperCase() === c;
+		}, i, true);
+	};
+	return AbstractMenu;
+})(phosphor_widget_1.Widget);
+exports.AbstractMenu = AbstractMenu;
+
+},{"phosphor-arrays":26,"phosphor-widget":50}],21:[function(require,module,exports){
+var css = ".p-MenuBar-content{margin:0;padding:0;display:flex;flex-direction:row;list-style-type:none}.p-MenuBar-item{box-sizing:border-box}.p-MenuBar-item.p-mod-hidden{display:none}.p-Menu{position:absolute;white-space:nowrap;overflow-x:hidden;overflow-y:auto}.p-Menu-content{margin:0;padding:0;display:table;list-style-type:none}.p-Menu-item{display:table-row}.p-Menu-item.p-mod-hidden{display:none}.p-Menu-itemIcon,.p-Menu-itemSubmenuIcon{display:table-cell;text-align:center}.p-Menu-itemText{display:table-cell;text-align:left}.p-Menu-itemShortcut{display:table-cell;text-align:right}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-menus\\lib\\index.css"})); module.exports = css;
+},{"browserify-css":2}],22:[function(require,module,exports){
+
+'use strict';
+function __export(m) {
+	for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
+__export(require('./base'));
+__export(require('./menu'));
+__export(require('./menubar'));
+__export(require('./menuitem'));
+require('./index.css');
+
+},{"./base":20,"./index.css":21,"./menu":23,"./menubar":24,"./menuitem":25}],23:[function(require,module,exports){
+
+'use strict';
+var __extends = (this && this.__extends) || function (d, b) {
+	for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	function __() { this.constructor = d; }
+	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var arrays = require('phosphor-arrays');
 var phosphor_domutil_1 = require('phosphor-domutil');
 var phosphor_messaging_1 = require('phosphor-messaging');
 var phosphor_signaling_1 = require('phosphor-signaling');
 var phosphor_widget_1 = require('phosphor-widget');
-var menubase_1 = require('./menubase');
+var base_1 = require('./base');
 var menuitem_1 = require('./menuitem');
 
 var MENU_CLASS = 'p-Menu';
@@ -3423,25 +3550,27 @@ var CONTENT_CLASS = 'p-Menu-content';
 
 var ITEM_CLASS = 'p-Menu-item';
 
-var ICON_CLASS = 'p-Menu-item-icon';
+var ICON_CLASS = 'p-Menu-itemIcon';
 
-var TEXT_CLASS = 'p-Menu-item-text';
+var TEXT_CLASS = 'p-Menu-itemText';
 
-var SHORTCUT_CLASS = 'p-Menu-item-shortcut';
+var SHORTCUT_CLASS = 'p-Menu-itemShortcut';
 
-var SUBMENU_CLASS = 'p-Menu-item-submenu';
+var SUBMENU_CLASS = 'p-Menu-itemSubmenuIcon';
 
-var CHECK_TYPE_CLASS = 'p-mod-check-type';
+var CHECK_TYPE_CLASS = 'p-type-check';
 
-var SEPARATOR_TYPE_CLASS = 'p-mod-separator-type';
+var SEPARATOR_TYPE_CLASS = 'p-type-separator';
 
-var SUBMENU_TYPE_CLASS = 'p-mod-submenu-type';
+var SUBMENU_TYPE_CLASS = 'p-type-submenu';
 
 var ACTIVE_CLASS = 'p-mod-active';
 
 var DISABLED_CLASS = 'p-mod-disabled';
 
 var CHECKED_CLASS = 'p-mod-checked';
+
+var HIDDEN_CLASS = 'p-mod-hidden';
 
 var OPEN_DELAY = 300;
 
@@ -3473,6 +3602,35 @@ var Menu = (function (_super) {
 		return node;
 	};
 
+	Menu.createItemNode = function () {
+		var node = document.createElement('li');
+		var icon = document.createElement('span');
+		var text = document.createElement('span');
+		var shortcut = document.createElement('span');
+		var submenu = document.createElement('span');
+		node.className = ITEM_CLASS;
+		text.className = TEXT_CLASS;
+		shortcut.className = SHORTCUT_CLASS;
+		submenu.className = SUBMENU_CLASS;
+		node.appendChild(icon);
+		node.appendChild(text);
+		node.appendChild(shortcut);
+		node.appendChild(submenu);
+		return node;
+	};
+
+	Menu.updateItemNode = function (node, item) {
+		var sep = item.type === menuitem_1.MenuItem.Separator;
+		var sub = item.type === menuitem_1.MenuItem.Submenu;
+		var icon = node.firstChild;
+		var text = icon.nextSibling;
+		var shortcut = text.nextSibling;
+		node.className = MenuPrivate.createItemClass(item);
+		icon.className = ICON_CLASS + (item.icon ? ' ' + item.icon : '');
+		text.textContent = sep ? '' : item.text.replace(/&/g, '');
+		shortcut.textContent = (sep || sub) ? '' : item.shortcut;
+	};
+
 	Menu.prototype.dispose = function () {
 		this.close();
 		_super.prototype.dispose.call(this);
@@ -3480,7 +3638,7 @@ var Menu = (function (_super) {
 	Object.defineProperty(Menu.prototype, "closed", {
 
 		get: function () {
-			return Menu.closedSignal.bind(this);
+			return MenuPrivate.closedSignal.bind(this);
 		},
 		enumerable: true,
 		configurable: true
@@ -3534,6 +3692,47 @@ var Menu = (function (_super) {
 		configurable: true
 	});
 
+	Menu.prototype.openActiveItem = function () {
+		if (!this.isVisible) {
+			return;
+		}
+		var index = this.activeIndex;
+		if (index === -1) {
+			return;
+		}
+		var item = this.items[index];
+		if (item.disabled || !item.submenu) {
+			return;
+		}
+		this._openChildMenu(item, this._nodes[index], false);
+		this._childMenu.activateNextItem();
+	};
+
+	Menu.prototype.triggerActiveItem = function () {
+		if (!this.isVisible) {
+			return;
+		}
+		var index = this.activeIndex;
+		if (index === -1) {
+			return;
+		}
+		var item = this.items[index];
+		if (item.disabled) {
+			return;
+		}
+		if (item.submenu) {
+			this._openChildMenu(item, this._nodes[index], false);
+			this._childMenu.activateNextItem();
+			return;
+		}
+		var handler = item.handler;
+		if (!handler) {
+			return;
+		}
+		this.rootMenu.close();
+		handler(item);
+	};
+
 	Menu.prototype.popup = function (x, y, forceX, forceY) {
 		if (forceX === void 0) { forceX = false; }
 		if (forceY === void 0) { forceY = false; }
@@ -3541,7 +3740,7 @@ var Menu = (function (_super) {
 			document.addEventListener('keydown', this, true);
 			document.addEventListener('keypress', this, true);
 			document.addEventListener('mousedown', this, true);
-			openRootMenu(this, x, y, forceX, forceY);
+			MenuPrivate.openRootMenu(this, x, y, forceX, forceY);
 		}
 	};
 
@@ -3549,14 +3748,14 @@ var Menu = (function (_super) {
 		if (forceX === void 0) { forceX = false; }
 		if (forceY === void 0) { forceY = false; }
 		if (!this.isAttached) {
-			openRootMenu(this, x, y, forceX, forceY);
+			MenuPrivate.openRootMenu(this, x, y, forceX, forceY);
 		}
 	};
 
 	Menu.prototype.handleEvent = function (event) {
 		switch (event.type) {
-			case 'mouseenter':
-				this._evtMouseEnter(event);
+			case 'mousemove':
+				this._evtMouseMove(event);
 				break;
 			case 'mouseleave':
 				this._evtMouseLeave(event);
@@ -3567,100 +3766,58 @@ var Menu = (function (_super) {
 			case 'mouseup':
 				this._evtMouseUp(event);
 				break;
-			case 'contextmenu':
-				event.preventDefault();
-				event.stopPropagation();
-				break;
 			case 'keydown':
 				this._evtKeyDown(event);
 				break;
 			case 'keypress':
 				this._evtKeyPress(event);
 				break;
+			case 'contextmenu':
+				event.preventDefault();
+				event.stopPropagation();
+				break;
 		}
 	};
 
 	Menu.prototype.isSelectable = function (item) {
-		if (item.type === menuitem_1.MenuItem.Separator) {
+		if (item.disabled || item.type === menuitem_1.MenuItem.Separator) {
 			return false;
 		}
 		if (item.type === menuitem_1.MenuItem.Submenu) {
-			return true;
+			return !!item.submenu;
 		}
-		return item.command ? item.command.isEnabled() : false;
+		return !!item.handler;
 	};
 
-	Menu.prototype.onItemsChanged = function (old, items) {
+	Menu.prototype.onItemsChanged = function (oldItems, newItems) {
+
 		this.close();
-	};
 
-	Menu.prototype.onActiveIndexChanged = function (old, index) {
-		var oldNode = this._nodes[old];
-		var newNode = this._nodes[index];
-		if (oldNode)
-			oldNode.classList.remove(ACTIVE_CLASS);
-		if (newNode)
-			newNode.classList.add(ACTIVE_CLASS);
-	};
-
-	Menu.prototype.onOpenItem = function (index, item) {
-		if (this.isAttached && item.submenu) {
-			var ref = this._nodes[index] || this.node;
-			this._openChildMenu(item, ref, false);
-			this._childMenu.activateNextItem();
-		}
-	};
-
-	Menu.prototype.onTriggerItem = function (index, item) {
-		this.rootMenu.close();
-		var cmd = item.command;
-		var args = item.commandArgs;
-		if (cmd && cmd.isEnabled())
-			cmd.execute(args);
-	};
-
-	Menu.prototype.onAfterAttach = function (msg) {
-		this.node.addEventListener('mouseup', this);
-		this.node.addEventListener('mouseleave', this);
-		this.node.addEventListener('contextmenu', this);
-	};
-
-	Menu.prototype.onBeforeDetach = function (msg) {
-		this.node.removeEventListener('mouseup', this);
-		this.node.removeEventListener('mouseleave', this);
-		this.node.removeEventListener('contextmenu', this);
-		document.removeEventListener('keydown', this, true);
-		document.removeEventListener('keypress', this, true);
-		document.removeEventListener('mousedown', this, true);
-	};
-
-	Menu.prototype.onUpdateRequest = function (msg) {
-
-		var items = this.items;
 		var nodes = this._nodes;
 		var content = this.contentNode;
+		var constructor = this.constructor;
 
-		while (nodes.length > items.length) {
+		while (nodes.length > newItems.length) {
 			var node = nodes.pop();
 			content.removeChild(node);
 		}
 
-		while (nodes.length < items.length) {
-			var node = createItemNode();
-			nodes.push(node);
+		while (nodes.length < newItems.length) {
+			var node = constructor.createItemNode();
 			content.appendChild(node);
-			node.addEventListener('mouseenter', this);
+			nodes.push(node);
 		}
 
-		for (var i = 0, n = items.length; i < n; ++i) {
-			updateItemNode(items[i], nodes[i]);
-		}
 
-		var active = nodes[this.activeIndex];
-		if (active)
-			active.classList.add(ACTIVE_CLASS);
+	};
 
-		menubase_1.collapseSeparators(items, nodes);
+	Menu.prototype.onActiveIndexChanged = function (oldIndex, newIndex) {
+		var oldNode = this._nodes[oldIndex];
+		var newNode = this._nodes[newIndex];
+		if (oldNode)
+			oldNode.classList.remove(ACTIVE_CLASS);
+		if (newNode)
+			newNode.classList.add(ACTIVE_CLASS);
 	};
 
 	Menu.prototype.onCloseRequest = function (msg) {
@@ -3687,7 +3844,7 @@ var Menu = (function (_super) {
 		}
 
 		if (this.parent) {
-			this.remove();
+			this.parent = null;
 			this.closed.emit(void 0);
 		}
 		else if (this.isAttached) {
@@ -3696,41 +3853,70 @@ var Menu = (function (_super) {
 		}
 	};
 
-	Menu.prototype._evtMouseEnter = function (event) {
+	Menu.prototype.onUpdateRequest = function (msg) {
+
+		var items = this.items;
+		var nodes = this._nodes;
+		var constructor = this.constructor;
+
+		for (var i = 0, n = items.length; i < n; ++i) {
+			constructor.updateItemNode(nodes[i], items[i]);
+		}
+
+		var active = nodes[this.activeIndex];
+		if (active)
+			active.classList.add(ACTIVE_CLASS);
+
+		MenuPrivate.hideUselessItems(nodes, items);
+	};
+
+	Menu.prototype.onAfterAttach = function (msg) {
+		this.node.addEventListener('mouseup', this);
+		this.node.addEventListener('mousemove', this);
+		this.node.addEventListener('mouseleave', this);
+		this.node.addEventListener('contextmenu', this);
+	};
+
+	Menu.prototype.onBeforeDetach = function (msg) {
+		this.node.removeEventListener('mouseup', this);
+		this.node.removeEventListener('mousemove', this);
+		this.node.removeEventListener('mouseleave', this);
+		this.node.removeEventListener('contextmenu', this);
+		document.removeEventListener('keydown', this, true);
+		document.removeEventListener('keypress', this, true);
+		document.removeEventListener('mousedown', this, true);
+	};
+
+	Menu.prototype._evtMouseMove = function (event) {
+		var x = event.clientX;
+		var y = event.clientY;
+		var i = arrays.findIndex(this._nodes, function (node) { return phosphor_domutil_1.hitTest(node, x, y); });
+		if (i === this.activeIndex) {
+			return;
+		}
+		this.activeIndex = i;
 		this._syncAncestors();
 		this._closeChildMenu();
 		this._cancelPendingOpen();
-		var node = event.currentTarget;
-		this.activeIndex = this._nodes.indexOf(node);
-		var item = this.items[this.activeIndex];
+		var item = this.activeItem;
 		if (item && item.submenu) {
 			if (item === this._childItem) {
 				this._cancelPendingClose();
 			}
 			else {
-				this._openChildMenu(item, node, true);
+				this._openChildMenu(item, this._nodes[i], true);
 			}
 		}
 	};
 
 	Menu.prototype._evtMouseLeave = function (event) {
 		this._cancelPendingOpen();
+		var x = event.clientX;
+		var y = event.clientY;
 		var child = this._childMenu;
-		if (!child || !phosphor_domutil_1.hitTest(child.node, event.clientX, event.clientY)) {
+		if (!child || !phosphor_domutil_1.hitTest(child.node, x, y)) {
 			this.activeIndex = -1;
 			this._closeChildMenu();
-		}
-	};
-
-	Menu.prototype._evtMouseUp = function (event) {
-		event.preventDefault();
-		event.stopPropagation();
-		if (event.button !== 0) {
-			return;
-		}
-		var node = this._nodes[this.activeIndex];
-		if (node && node.contains(event.target)) {
-			this.triggerActiveItem();
 		}
 	};
 
@@ -3745,6 +3931,18 @@ var Menu = (function (_super) {
 		}
 		if (!hit)
 			this.close();
+	};
+
+	Menu.prototype._evtMouseUp = function (event) {
+		if (event.button !== 0) {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		var node = this._nodes[this.activeIndex];
+		if (node && node.contains(event.target)) {
+			this.triggerActiveItem();
+		}
 	};
 
 	Menu.prototype._evtKeyDown = function (event) {
@@ -3813,7 +4011,7 @@ var Menu = (function (_super) {
 				_this._childItem = item;
 				_this._childMenu = menu;
 				menu._parentMenu = _this;
-				openSubmenu(menu, node);
+				MenuPrivate.openSubmenu(menu, node);
 			}, OPEN_DELAY);
 		}
 		else {
@@ -3821,7 +4019,7 @@ var Menu = (function (_super) {
 			this._childItem = item;
 			this._childMenu = menu;
 			menu._parentMenu = this;
-			openSubmenu(menu, node);
+			MenuPrivate.openSubmenu(menu, node);
 		}
 	};
 
@@ -3855,150 +4053,148 @@ var Menu = (function (_super) {
 			this._closeTimerId = 0;
 		}
 	};
-
-	Menu.closedSignal = new phosphor_signaling_1.Signal();
 	return Menu;
-})(menubase_1.MenuBase);
+})(base_1.AbstractMenu);
 exports.Menu = Menu;
 
-function createItemNode() {
-	var node = document.createElement('li');
-	var icon = document.createElement('span');
-	var text = document.createElement('span');
-	var shortcut = document.createElement('span');
-	var submenu = document.createElement('span');
-	text.className = TEXT_CLASS;
-	shortcut.className = SHORTCUT_CLASS;
-	submenu.className = SUBMENU_CLASS;
-	node.appendChild(icon);
-	node.appendChild(text);
-	node.appendChild(shortcut);
-	node.appendChild(submenu);
-	return node;
-}
+var MenuPrivate;
+(function (MenuPrivate) {
 
-function createItemClass(item) {
-	var parts = [ITEM_CLASS];
-	if (item.className) {
-		parts.push(item.className);
+	MenuPrivate.closedSignal = new phosphor_signaling_1.Signal();
+
+	function createItemClass(item) {
+		var name = ITEM_CLASS;
+		if (item.className) {
+			name += ' ' + item.className;
+		}
+		if (item.type === menuitem_1.MenuItem.Separator) {
+			return name + ' ' + SEPARATOR_TYPE_CLASS;
+		}
+		if (item.type === menuitem_1.MenuItem.Submenu) {
+			name += ' ' + SUBMENU_TYPE_CLASS;
+			if (item.disabled || !item.submenu) {
+				name += ' ' + DISABLED_CLASS;
+			}
+			return name;
+		}
+		if (item.type === menuitem_1.MenuItem.Check) {
+			name += ' ' + CHECK_TYPE_CLASS;
+			if (item.checked) {
+				name += ' ' + CHECKED_CLASS;
+			}
+		}
+		if (item.disabled || !item.handler) {
+			name += ' ' + DISABLED_CLASS;
+		}
+		return name;
 	}
-	if (item.type === menuitem_1.MenuItem.Separator) {
-		parts.push(SEPARATOR_TYPE_CLASS);
-		return parts.join(' ');
-	}
-	if (item.type === menuitem_1.MenuItem.Submenu) {
-		parts.push(SUBMENU_TYPE_CLASS);
-		return parts.join(' ');
-	}
-	if (item.type === menuitem_1.MenuItem.Check) {
-		parts.push(CHECK_TYPE_CLASS);
-		if (item.command && item.command.isChecked()) {
-			parts.push(CHECKED_CLASS);
+	MenuPrivate.createItemClass = createItemClass;
+
+	function hideUselessItems(nodes, items) {
+
+		var k1;
+		for (k1 = 0; k1 < items.length; ++k1) {
+			if (items[k1].type !== menuitem_1.MenuItem.Separator) {
+				break;
+			}
+			nodes[k1].classList.add(HIDDEN_CLASS);
+		}
+
+		var k2;
+		for (k2 = items.length - 1; k2 >= 0; --k2) {
+			if (items[k2].type !== menuitem_1.MenuItem.Separator) {
+				break;
+			}
+			nodes[k2].classList.add(HIDDEN_CLASS);
+		}
+
+		var hide = false;
+		while (++k1 < k2) {
+			if (items[k1].type !== menuitem_1.MenuItem.Separator) {
+				hide = false;
+			}
+			else if (hide) {
+				nodes[k1].classList.add(HIDDEN_CLASS);
+			}
+			else {
+				hide = true;
+			}
 		}
 	}
-	if (!item.command || !item.command.isEnabled()) {
-		parts.push(DISABLED_CLASS);
-	}
-	return parts.join(' ');
-}
+	MenuPrivate.hideUselessItems = hideUselessItems;
 
-function createIconClass(item) {
-	return item.icon ? (ICON_CLASS + ' ' + item.icon) : ICON_CLASS;
-}
-
-function createTextContent(item) {
-	if (item.type === menuitem_1.MenuItem.Separator) {
-		return '';
-	}
-	return item.text.replace(/&/g, '');
-}
-
-function createShortcutText(item) {
-	if (item.type === menuitem_1.MenuItem.Separator || item.type === menuitem_1.MenuItem.Submenu) {
-		return '';
-	}
-	return item.shortcut;
-}
-
-function updateItemNode(item, node) {
-	var icon = node.children[0];
-	var text = node.children[1];
-	var shortcut = node.children[2];
-	node.className = createItemClass(item);
-	icon.className = createIconClass(item);
-	text.textContent = createTextContent(item);
-	shortcut.textContent = createShortcutText(item);
-}
-
-function clientViewportRect() {
-	var elem = document.documentElement;
-	var x = window.pageXOffset;
-	var y = window.pageYOffset;
-	var width = elem.clientWidth;
-	var height = elem.clientHeight;
-	return { x: x, y: y, width: width, height: height };
-}
-
-function mountAndMeasure(menu, maxHeight) {
-	var node = menu.node;
-	var style = node.style;
-	style.top = '';
-	style.left = '';
-	style.width = '';
-	style.height = '';
-	style.visibility = 'hidden';
-	style.maxHeight = maxHeight + 'px';
-	menu.attach(document.body);
-	if (node.scrollHeight > maxHeight) {
-		style.width = 2 * node.offsetWidth - node.clientWidth + 'px';
-	}
-	var rect = node.getBoundingClientRect();
-	return { width: rect.width, height: rect.height };
-}
-
-function showMenu(menu, x, y) {
-	var style = menu.node.style;
-	style.top = Math.max(0, y) + 'px';
-	style.left = Math.max(0, x) + 'px';
-	style.visibility = '';
-}
-
-function openRootMenu(menu, x, y, forceX, forceY) {
-	phosphor_messaging_1.sendMessage(menu, phosphor_widget_1.Widget.MsgUpdateRequest);
-	var rect = clientViewportRect();
-	var size = mountAndMeasure(menu, rect.height - (forceY ? y : 0));
-	if (!forceX && (x + size.width > rect.x + rect.width)) {
-		x = rect.x + rect.width - size.width;
-	}
-	if (!forceY && (y + size.height > rect.y + rect.height)) {
-		if (y > rect.y + rect.height) {
-			y = rect.y + rect.height - size.height;
+	function openRootMenu(menu, x, y, forceX, forceY) {
+		phosphor_messaging_1.sendMessage(menu, phosphor_widget_1.Widget.MsgUpdateRequest);
+		var rect = clientViewportRect();
+		var size = mountAndMeasure(menu, rect.height - (forceY ? y : 0));
+		if (!forceX && (x + size.width > rect.x + rect.width)) {
+			x = rect.x + rect.width - size.width;
 		}
-		else {
-			y = y - size.height;
+		if (!forceY && (y + size.height > rect.y + rect.height)) {
+			if (y > rect.y + rect.height) {
+				y = rect.y + rect.height - size.height;
+			}
+			else {
+				y = y - size.height;
+			}
 		}
+		showMenu(menu, x, y);
 	}
-	showMenu(menu, x, y);
-}
+	MenuPrivate.openRootMenu = openRootMenu;
 
-function openSubmenu(menu, item) {
-	phosphor_messaging_1.sendMessage(menu, phosphor_widget_1.Widget.MsgUpdateRequest);
-	var rect = clientViewportRect();
-	var size = mountAndMeasure(menu, rect.height);
-	var box = phosphor_domutil_1.boxSizing(menu.node);
-	var itemRect = item.getBoundingClientRect();
-	var x = itemRect.right - SUBMENU_OVERLAP;
-	var y = itemRect.top - box.borderTop - box.paddingTop;
-	if (x + size.width > rect.x + rect.width) {
-		x = itemRect.left + SUBMENU_OVERLAP - size.width;
+	function openSubmenu(menu, item) {
+		phosphor_messaging_1.sendMessage(menu, phosphor_widget_1.Widget.MsgUpdateRequest);
+		var rect = clientViewportRect();
+		var size = mountAndMeasure(menu, rect.height);
+		var box = phosphor_domutil_1.boxSizing(menu.node);
+		var itemRect = item.getBoundingClientRect();
+		var x = itemRect.right - SUBMENU_OVERLAP;
+		var y = itemRect.top - box.borderTop - box.paddingTop;
+		if (x + size.width > rect.x + rect.width) {
+			x = itemRect.left + SUBMENU_OVERLAP - size.width;
+		}
+		if (y + size.height > rect.y + rect.height) {
+			y = itemRect.bottom + box.borderBottom + box.paddingBottom - size.height;
+		}
+		showMenu(menu, x, y);
 	}
-	if (y + size.height > rect.y + rect.height) {
-		y = itemRect.bottom + box.borderBottom + box.paddingBottom - size.height;
-	}
-	showMenu(menu, x, y);
-}
+	MenuPrivate.openSubmenu = openSubmenu;
 
-},{"./menubase":24,"./menuitem":25,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-signaling":35,"phosphor-widget":52}],23:[function(require,module,exports){
+	function clientViewportRect() {
+		var elem = document.documentElement;
+		var x = window.pageXOffset;
+		var y = window.pageYOffset;
+		var width = elem.clientWidth;
+		var height = elem.clientHeight;
+		return { x: x, y: y, width: width, height: height };
+	}
+
+	function mountAndMeasure(menu, maxHeight) {
+		var node = menu.node;
+		var style = node.style;
+		style.top = '';
+		style.left = '';
+		style.width = '';
+		style.height = '';
+		style.visibility = 'hidden';
+		style.maxHeight = maxHeight + "px";
+		menu.attach(document.body);
+		if (node.scrollHeight > maxHeight) {
+			style.width = (2 * node.offsetWidth - node.clientWidth) + "px";
+		}
+		var rect = node.getBoundingClientRect();
+		return { width: rect.width, height: rect.height };
+	}
+
+	function showMenu(menu, x, y) {
+		var style = menu.node.style;
+		style.top = Math.max(0, y) + "px";
+		style.left = Math.max(0, x) + "px";
+		style.visibility = '';
+	}
+})(MenuPrivate || (MenuPrivate = {}));
+
+},{"./base":20,"./menuitem":25,"phosphor-arrays":26,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-signaling":35,"phosphor-widget":50}],24:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -4006,8 +4202,9 @@ var __extends = (this && this.__extends) || function (d, b) {
 	function __() { this.constructor = d; }
 	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var arrays = require('phosphor-arrays');
 var phosphor_domutil_1 = require('phosphor-domutil');
-var menubase_1 = require('./menubase');
+var base_1 = require('./base');
 var menuitem_1 = require('./menuitem');
 
 var MENU_BAR_CLASS = 'p-MenuBar';
@@ -4018,11 +4215,11 @@ var MENU_CLASS = 'p-MenuBar-menu';
 
 var ITEM_CLASS = 'p-MenuBar-item';
 
-var ICON_CLASS = 'p-MenuBar-item-icon';
+var ICON_CLASS = 'p-MenuBar-itemIcon';
 
-var TEXT_CLASS = 'p-MenuBar-item-text';
+var TEXT_CLASS = 'p-MenuBar-itemText';
 
-var SEPARATOR_TYPE_CLASS = 'p-mod-separator-type';
+var SEPARATOR_TYPE_CLASS = 'p-type-separator';
 
 var ACTIVE_CLASS = 'p-mod-active';
 
@@ -4051,6 +4248,27 @@ var MenuBar = (function (_super) {
 		return node;
 	};
 
+	MenuBar.createItemNode = function () {
+		var node = document.createElement('li');
+		var icon = document.createElement('span');
+		var text = document.createElement('span');
+		node.className = ITEM_CLASS;
+		icon.className = ICON_CLASS;
+		text.className = TEXT_CLASS;
+		node.appendChild(icon);
+		node.appendChild(text);
+		return node;
+	};
+
+	MenuBar.updateItemNode = function (node, item) {
+		var sep = item.type === menuitem_1.MenuItem.Separator;
+		var icon = node.firstChild;
+		var text = node.lastChild;
+		node.className = MenuBarPrivate.createItemClass(item);
+		icon.className = ICON_CLASS + (item.icon ? ' ' + item.icon : '');
+		text.textContent = sep ? '' : item.text.replace(/&/g, '');
+	};
+
 	MenuBar.prototype.dispose = function () {
 		this._reset();
 		_super.prototype.dispose.call(this);
@@ -4072,6 +4290,23 @@ var MenuBar = (function (_super) {
 		configurable: true
 	});
 
+	MenuBar.prototype.openActiveItem = function () {
+		if (!this.isVisible) {
+			return;
+		}
+		var index = this.activeIndex;
+		if (index === -1) {
+			return;
+		}
+		var item = this.items[index];
+		if (item.disabled || !item.submenu) {
+			return;
+		}
+		this._activate();
+		this._closeChildMenu();
+		this._openChildMenu(item.submenu, this._nodes[index]);
+	};
+
 	MenuBar.prototype.handleEvent = function (event) {
 		switch (event.type) {
 			case 'mousedown':
@@ -4083,63 +4318,83 @@ var MenuBar = (function (_super) {
 			case 'mouseleave':
 				this._evtMouseLeave(event);
 				break;
-			case 'contextmenu':
-				event.preventDefault();
-				event.stopPropagation();
-				break;
 			case 'keydown':
 				this._evtKeyDown(event);
 				break;
 			case 'keypress':
 				this._evtKeyPress(event);
 				break;
+			case 'contextmenu':
+				event.preventDefault();
+				event.stopPropagation();
+				break;
 		}
 	};
 
 	MenuBar.prototype.isSelectable = function (item) {
-		return !!item.submenu;
+		return !item.disabled && !!item.submenu;
 	};
 
-	MenuBar.prototype.onItemsChanged = function (old, items) {
+	MenuBar.prototype.onItemsChanged = function (oldItems, newItems) {
 
 		this._reset();
 
-		for (var i = 0, n = old.length; i < n; ++i) {
-			if (items.indexOf(old[i]) === -1) {
-				old[i].changed.disconnect(this._onItemChanged, this);
+		for (var _i = 0; _i < oldItems.length; _i++) {
+			var item = oldItems[_i];
+			if (newItems.indexOf(item) === -1) {
+				item.changed.disconnect(this._onItemChanged, this);
 			}
 		}
 
-		for (var i = 0, n = items.length; i < n; ++i) {
-			if (old.indexOf(items[i]) === -1) {
-				items[i].changed.connect(this._onItemChanged, this);
+		for (var _a = 0; _a < newItems.length; _a++) {
+			var item = newItems[_a];
+			if (oldItems.indexOf(item) === -1) {
+				item.changed.connect(this._onItemChanged, this);
 			}
+		}
+
+		var nodes = this._nodes;
+		var content = this.contentNode;
+		var constructor = this.constructor;
+
+		while (nodes.length > newItems.length) {
+			var node = nodes.pop();
+			content.removeChild(node);
+		}
+
+		while (nodes.length < newItems.length) {
+			var node = constructor.createItemNode();
+			content.appendChild(node);
+			nodes.push(node);
 		}
 
 		this.update();
 	};
 
-	MenuBar.prototype.onActiveIndexChanged = function (old, index) {
-		var oldNode = this._nodes[old];
-		var newNode = this._nodes[index];
+	MenuBar.prototype.onActiveIndexChanged = function (oldIndex, newIndex) {
+		var oldNode = this._nodes[oldIndex];
+		var newNode = this._nodes[newIndex];
 		if (oldNode)
 			oldNode.classList.remove(ACTIVE_CLASS);
 		if (newNode)
 			newNode.classList.add(ACTIVE_CLASS);
 	};
 
-	MenuBar.prototype.onOpenItem = function (index, item) {
-		if (this.isAttached && item.submenu) {
-			var ref = this._nodes[index] || this.node;
-			this._activate();
-			this._closeChildMenu();
-			this._openChildMenu(item.submenu, ref);
-		}
-	};
+	MenuBar.prototype.onUpdateRequest = function (msg) {
 
-	MenuBar.prototype.onCloseRequest = function (msg) {
-		this._reset();
-		_super.prototype.onCloseRequest.call(this, msg);
+		var items = this.items;
+		var nodes = this._nodes;
+		var constructor = this.constructor;
+
+		for (var i = 0, n = items.length; i < n; ++i) {
+			constructor.updateItemNode(nodes[i], items[i]);
+		}
+
+		var active = nodes[this.activeIndex];
+		if (active)
+			active.classList.add(ACTIVE_CLASS);
+
+		MenuBarPrivate.hideUselessItems(nodes, items);
 	};
 
 	MenuBar.prototype.onAfterAttach = function (msg) {
@@ -4154,49 +4409,38 @@ var MenuBar = (function (_super) {
 		this.node.removeEventListener('mousemove', this);
 		this.node.removeEventListener('mouseleave', this);
 		this.node.removeEventListener('contextmenu', this);
-	};
-
-	MenuBar.prototype.onUpdateRequest = function (msg) {
-
-		var items = this.items;
-		var nodes = this._nodes;
-		var content = this.contentNode;
-
-		while (nodes.length > items.length) {
-			var node = nodes.pop();
-			content.removeChild(node);
-		}
-
-		while (nodes.length < items.length) {
-			var node = createItemNode();
-			nodes.push(node);
-			content.appendChild(node);
-		}
-
-		for (var i = 0, n = items.length; i < n; ++i) {
-			updateItemNode(items[i], nodes[i]);
-		}
-
-		var active = nodes[this.activeIndex];
-		if (active)
-			active.classList.add(ACTIVE_CLASS);
-
-		menubase_1.collapseSeparators(items, nodes);
+		this._reset();
 	};
 
 	MenuBar.prototype._evtMouseDown = function (event) {
+
+
+
 		var x = event.clientX;
 		var y = event.clientY;
-
-
-
-		if (this._active && hitTestMenus(this._childMenu, x, y)) {
+		if (this._active && MenuBarPrivate.hitTestMenus(this._childMenu, x, y)) {
 			return;
 		}
 
-		var i = hitTestNodes(this._nodes, x, y);
 
 
+		if (phosphor_domutil_1.hitTest(this.node, x, y)) {
+			event.preventDefault();
+			event.stopPropagation();
+		}
+
+		var i = arrays.findIndex(this._nodes, function (node) { return phosphor_domutil_1.hitTest(node, x, y); });
+
+		if (i === -1) {
+			this._deactivate();
+			this._closeChildMenu();
+			this.activeIndex = -1;
+			return;
+		}
+
+		if (event.button !== 0) {
+			return;
+		}
 
 		if (this._active) {
 			this._deactivate();
@@ -4205,23 +4449,16 @@ var MenuBar = (function (_super) {
 			return;
 		}
 
-
-		if (i === -1) {
-			this.activeIndex = -1;
-			return;
-		}
-
-
 		this._activate();
 		this.activeIndex = i;
 		this.openActiveItem();
 	};
 
 	MenuBar.prototype._evtMouseMove = function (event) {
+
 		var x = event.clientX;
 		var y = event.clientY;
-
-		var i = hitTestNodes(this._nodes, x, y);
+		var i = arrays.findIndex(this._nodes, function (node) { return phosphor_domutil_1.hitTest(node, x, y); });
 
 		if (i === this.activeIndex) {
 			return;
@@ -4281,7 +4518,7 @@ var MenuBar = (function (_super) {
 				break;
 			case 39:
 				event.preventDefault();
-				if (leaf && activeHasMenu(leaf)) {
+				if (leaf && leaf.activeItem && leaf.activeItem.submenu) {
 					leaf.openActiveItem();
 				}
 				else {
@@ -4307,6 +4544,28 @@ var MenuBar = (function (_super) {
 		(leaf || this).activateMnemonicItem(key);
 	};
 
+	MenuBar.prototype._activate = function () {
+		if (this._active) {
+			return;
+		}
+		this._active = true;
+		this.addClass(ACTIVE_CLASS);
+		document.addEventListener('mousedown', this, true);
+		document.addEventListener('keydown', this, true);
+		document.addEventListener('keypress', this, true);
+	};
+
+	MenuBar.prototype._deactivate = function () {
+		if (!this._active) {
+			return;
+		}
+		this._active = false;
+		this.removeClass(ACTIVE_CLASS);
+		document.removeEventListener('mousedown', this, true);
+		document.removeEventListener('keydown', this, true);
+		document.removeEventListener('keypress', this, true);
+	};
+
 	MenuBar.prototype._openChildMenu = function (menu, node) {
 		var rect = node.getBoundingClientRect();
 		this._childMenu = menu;
@@ -4317,42 +4576,13 @@ var MenuBar = (function (_super) {
 
 	MenuBar.prototype._closeChildMenu = function () {
 		var menu = this._childMenu;
-		if (menu) {
-			this._childMenu = null;
-			menu.closed.disconnect(this._onMenuClosed, this);
-			menu.removeClass(MENU_CLASS);
-			menu.close();
-		}
-	};
-
-	MenuBar.prototype._activate = function () {
-		var _this = this;
-		if (this._active) {
+		if (!menu) {
 			return;
 		}
-		this._active = true;
-		this.addClass(ACTIVE_CLASS);
-		setTimeout(function () {
-			_this.node.removeEventListener('mousedown', _this);
-			document.addEventListener('mousedown', _this, true);
-			document.addEventListener('keydown', _this, true);
-			document.addEventListener('keypress', _this, true);
-		}, 0);
-	};
-
-	MenuBar.prototype._deactivate = function () {
-		var _this = this;
-		if (!this._active) {
-			return;
-		}
-		this._active = false;
-		this.removeClass(ACTIVE_CLASS);
-		setTimeout(function () {
-			_this.node.addEventListener('mousedown', _this);
-			document.removeEventListener('mousedown', _this, true);
-			document.removeEventListener('keydown', _this, true);
-			document.removeEventListener('keypress', _this, true);
-		}, 0);
+		this._childMenu = null;
+		menu.closed.disconnect(this._onMenuClosed, this);
+		menu.removeClass(MENU_CLASS);
+		menu.close();
 	};
 
 	MenuBar.prototype._reset = function () {
@@ -4361,7 +4591,7 @@ var MenuBar = (function (_super) {
 		this.activeIndex = -1;
 	};
 
-	MenuBar.prototype._onItemChanged = function (sender, args) {
+	MenuBar.prototype._onItemChanged = function () {
 		this._reset();
 		this.update();
 	};
@@ -4369,252 +4599,81 @@ var MenuBar = (function (_super) {
 	MenuBar.prototype._onMenuClosed = function (sender) {
 		sender.closed.disconnect(this._onMenuClosed, this);
 		sender.removeClass(MENU_CLASS);
+		this._deactivate();
 		this._childMenu = null;
-		this._reset();
+		this.activeIndex = -1;
 	};
 	return MenuBar;
-})(menubase_1.MenuBase);
+})(base_1.AbstractMenu);
 exports.MenuBar = MenuBar;
 
-function createItemNode() {
-	var node = document.createElement('li');
-	var icon = document.createElement('span');
-	var text = document.createElement('span');
-	text.className = TEXT_CLASS;
-	node.appendChild(icon);
-	node.appendChild(text);
-	return node;
-}
+var MenuBarPrivate;
+(function (MenuBarPrivate) {
 
-function createItemClass(item) {
-	var parts = [ITEM_CLASS];
-	if (item.className) {
-		parts.push(item.className);
-	}
-	if (item.type === menuitem_1.MenuItem.Separator) {
-		parts.push(SEPARATOR_TYPE_CLASS);
-	}
-	else if (item.type !== menuitem_1.MenuItem.Submenu) {
-		parts.push(HIDDEN_CLASS);
-	}
-	else if (!item.submenu) {
-		parts.push(DISABLED_CLASS);
-	}
-	return parts.join(' ');
-}
-
-function createIconClass(item) {
-	return item.icon ? (ICON_CLASS + ' ' + item.icon) : ICON_CLASS;
-}
-
-function createTextContent(item) {
-	var sep = item.type === menuitem_1.MenuItem.Separator;
-	return sep ? '' : item.text.replace(/&/g, '');
-}
-
-function updateItemNode(item, node) {
-	var icon = node.firstChild;
-	var text = node.lastChild;
-	node.className = createItemClass(item);
-	icon.className = createIconClass(item);
-	text.textContent = createTextContent(item);
-}
-
-function activeHasMenu(menu) {
-	var item = menu.items[menu.activeIndex];
-	return !!(item && item.submenu);
-}
-
-function hitTestNodes(nodes, x, y) {
-	for (var i = 0, n = nodes.length; i < n; ++i) {
-		if (phosphor_domutil_1.hitTest(nodes[i], x, y))
-			return i;
-	}
-	return -1;
-}
-
-function hitTestMenus(menu, x, y) {
-	while (menu) {
-		if (phosphor_domutil_1.hitTest(menu.node, x, y)) {
-			return true;
+	function createItemClass(item) {
+		var name = ITEM_CLASS;
+		if (item.className) {
+			name += ' ' + item.className;
 		}
-		menu = menu.childMenu;
+		if (item.type === menuitem_1.MenuItem.Separator) {
+			return name + ' ' + SEPARATOR_TYPE_CLASS;
+		}
+		if (item.disabled || (item.type === menuitem_1.MenuItem.Submenu && !item.submenu)) {
+			return name + ' ' + DISABLED_CLASS;
+		}
+		return name;
 	}
-	return false;
-}
+	MenuBarPrivate.createItemClass = createItemClass;
 
-},{"./menubase":24,"./menuitem":25,"phosphor-domutil":17}],24:[function(require,module,exports){
-
-'use strict';
-var __extends = (this && this.__extends) || function (d, b) {
-	for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-	function __() { this.constructor = d; }
-	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var arrays = require('phosphor-arrays');
-var phosphor_properties_1 = require('phosphor-properties');
-var phosphor_widget_1 = require('phosphor-widget');
-var menuitem_1 = require('./menuitem');
-
-var COLLAPSED_CLASS = 'p-mod-collapsed';
-
-var MenuBase = (function (_super) {
-	__extends(MenuBase, _super);
-	function MenuBase() {
-		_super.apply(this, arguments);
-	}
-	Object.defineProperty(MenuBase.prototype, "items", {
-
-		get: function () {
-			return MenuBase.itemsProperty.get(this);
-		},
-
-		set: function (value) {
-			MenuBase.itemsProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(MenuBase.prototype, "activeIndex", {
-
-		get: function () {
-			return MenuBase.activeIndexProperty.get(this);
-		},
-
-		set: function (value) {
-			MenuBase.activeIndexProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-
-	MenuBase.prototype.activateNextItem = function () {
-		var _this = this;
-		var k = this.activeIndex + 1;
-		var i = k >= this.items.length ? 0 : k;
-		var pred = function (item) { return _this.isSelectable(item); };
-		this.activeIndex = arrays.findIndex(this.items, pred, i, true);
-	};
-
-	MenuBase.prototype.activatePreviousItem = function () {
-		var _this = this;
-		var k = this.activeIndex;
-		var i = k <= 0 ? this.items.length - 1 : k - 1;
-		var pred = function (item) { return _this.isSelectable(item); };
-		this.activeIndex = arrays.rfindIndex(this.items, pred, i, true);
-	};
-
-	MenuBase.prototype.activateMnemonicItem = function (char) {
-		var _this = this;
-		var c = char.toUpperCase();
-		var k = this.activeIndex + 1;
-		var i = k >= this.items.length ? 0 : k;
-		this.activeIndex = arrays.findIndex(this.items, function (item) {
-			if (!_this.isSelectable(item)) {
-				return false;
+	function hitTestMenus(menu, x, y) {
+		while (menu) {
+			if (phosphor_domutil_1.hitTest(menu.node, x, y)) {
+				return true;
 			}
-			var match = item.text.match(/&\w/);
-			if (!match) {
-				return false;
+			menu = menu.childMenu;
+		}
+		return false;
+	}
+	MenuBarPrivate.hitTestMenus = hitTestMenus;
+
+	function hideUselessItems(nodes, items) {
+
+		var k1;
+		for (k1 = 0; k1 < items.length; ++k1) {
+			if (items[k1].type === menuitem_1.MenuItem.Submenu) {
+				break;
 			}
-			return match[0][1].toUpperCase() === c;
-		}, i, true);
-	};
-
-	MenuBase.prototype.openActiveItem = function () {
-		var i = this.activeIndex;
-		var item = this.items[i];
-		if (item && item.type === menuitem_1.MenuItem.Submenu) {
-			this.onOpenItem(i, item);
+			nodes[k1].classList.add(HIDDEN_CLASS);
 		}
-	};
 
-	MenuBase.prototype.triggerActiveItem = function () {
-		var i = this.activeIndex;
-		var item = this.items[i];
-		if (item && item.type === menuitem_1.MenuItem.Submenu) {
-			this.onOpenItem(i, item);
+		var k2;
+		for (k2 = items.length - 1; k2 >= 0; --k2) {
+			if (items[k2].type === menuitem_1.MenuItem.Submenu) {
+				break;
+			}
+			nodes[k2].classList.add(HIDDEN_CLASS);
 		}
-		else if (item && item.type !== menuitem_1.MenuItem.Separator) {
-			this.onTriggerItem(i, item);
-		}
-	};
 
-	MenuBase.prototype.isSelectable = function (item) {
-		return item.type !== menuitem_1.MenuItem.Separator;
-	};
-
-	MenuBase.prototype.coerceActiveIndex = function (index) {
-		var i = index | 0;
-		var item = this.items[i];
-		return (item && this.isSelectable(item)) ? i : -1;
-	};
-
-	MenuBase.prototype.onItemsChanged = function (old, items) { };
-
-	MenuBase.prototype.onActiveIndexChanged = function (old, index) { };
-
-	MenuBase.prototype.onOpenItem = function (index, item) { };
-
-	MenuBase.prototype.onTriggerItem = function (index, item) { };
-
-	MenuBase.itemsProperty = new phosphor_properties_1.Property({
-		name: 'items',
-		value: Object.freeze([]),
-		coerce: function (owner, value) { return Object.freeze(value ? value.slice() : []); },
-		changed: function (owner, old, value) { return owner.onItemsChanged(old, value); },
-	});
-
-	MenuBase.activeIndexProperty = new phosphor_properties_1.Property({
-		name: 'activeIndex',
-		value: -1,
-		coerce: function (owner, index) { return owner.coerceActiveIndex(index); },
-		changed: function (owner, old, index) { return owner.onActiveIndexChanged(old, index); },
-	});
-	return MenuBase;
-})(phosphor_widget_1.Widget);
-exports.MenuBase = MenuBase;
-
-function collapseSeparators(items, nodes) {
-
-	var k1;
-	for (k1 = 0; k1 < items.length; ++k1) {
-		var item = items[k1];
-		var node = nodes[k1];
-		if (item.type !== menuitem_1.MenuItem.Separator) {
-			node.classList.remove(COLLAPSED_CLASS);
-			break;
-		}
-		node.classList.add(COLLAPSED_CLASS);
-	}
-
-	var k2;
-	for (k2 = items.length - 1; k2 >= 0; --k2) {
-		var item = items[k2];
-		var node = nodes[k2];
-		if (item.type !== menuitem_1.MenuItem.Separator) {
-			node.classList.remove(COLLAPSED_CLASS);
-			break;
-		}
-		node.classList.add(COLLAPSED_CLASS);
-	}
-
-	var collapse = false;
-	while (++k1 < k2) {
-		var item = items[k1];
-		var node = nodes[k1];
-		if (collapse && item.type === menuitem_1.MenuItem.Separator) {
-			node.classList.add(COLLAPSED_CLASS);
-		}
-		else {
-			node.classList.remove(COLLAPSED_CLASS);
-			collapse = item.type === menuitem_1.MenuItem.Separator;
+		var hide = false;
+		while (++k1 < k2) {
+			if (items[k1].type === menuitem_1.MenuItem.Submenu) {
+				hide = false;
+			}
+			else if (items[k1].type !== menuitem_1.MenuItem.Separator) {
+				nodes[k1].classList.add(HIDDEN_CLASS);
+			}
+			else if (hide) {
+				nodes[k1].classList.add(HIDDEN_CLASS);
+			}
+			else {
+				hide = true;
+			}
 		}
 	}
-}
-exports.collapseSeparators = collapseSeparators;
+	MenuBarPrivate.hideUselessItems = hideUselessItems;
+})(MenuBarPrivate || (MenuBarPrivate = {}));
 
-},{"./menuitem":25,"phosphor-arrays":26,"phosphor-properties":34,"phosphor-widget":52}],25:[function(require,module,exports){
+},{"./base":20,"./menuitem":25,"phosphor-arrays":26,"phosphor-domutil":17}],25:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
@@ -4636,12 +4695,12 @@ var MenuItem = (function () {
 
 	function MenuItem(options) {
 		if (options)
-			initFrom(this, options);
+			MenuItemPrivate.initFrom(this, options);
 	}
 	Object.defineProperty(MenuItem.prototype, "changed", {
 
 		get: function () {
-			return MenuItem.changedSignal.bind(this);
+			return MenuItemPrivate.changedSignal.bind(this);
 		},
 		enumerable: true,
 		configurable: true
@@ -4649,11 +4708,11 @@ var MenuItem = (function () {
 	Object.defineProperty(MenuItem.prototype, "type", {
 
 		get: function () {
-			return MenuItem.typeProperty.get(this);
+			return MenuItemPrivate.typeProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.typeProperty.set(this, value);
+			MenuItemPrivate.typeProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
@@ -4661,11 +4720,11 @@ var MenuItem = (function () {
 	Object.defineProperty(MenuItem.prototype, "text", {
 
 		get: function () {
-			return MenuItem.textProperty.get(this);
+			return MenuItemPrivate.textProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.textProperty.set(this, value);
+			MenuItemPrivate.textProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
@@ -4673,11 +4732,11 @@ var MenuItem = (function () {
 	Object.defineProperty(MenuItem.prototype, "icon", {
 
 		get: function () {
-			return MenuItem.iconProperty.get(this);
+			return MenuItemPrivate.iconProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.iconProperty.set(this, value);
+			MenuItemPrivate.iconProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
@@ -4685,11 +4744,35 @@ var MenuItem = (function () {
 	Object.defineProperty(MenuItem.prototype, "shortcut", {
 
 		get: function () {
-			return MenuItem.shortcutProperty.get(this);
+			return MenuItemPrivate.shortcutProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.shortcutProperty.set(this, value);
+			MenuItemPrivate.shortcutProperty.set(this, value);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(MenuItem.prototype, "checked", {
+
+		get: function () {
+			return MenuItemPrivate.checkedProperty.get(this);
+		},
+
+		set: function (value) {
+			MenuItemPrivate.checkedProperty.set(this, value);
+		},
+		enumerable: true,
+		configurable: true
+	});
+	Object.defineProperty(MenuItem.prototype, "disabled", {
+
+		get: function () {
+			return MenuItemPrivate.disabledProperty.get(this);
+		},
+
+		set: function (value) {
+			MenuItemPrivate.disabledProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
@@ -4697,35 +4780,23 @@ var MenuItem = (function () {
 	Object.defineProperty(MenuItem.prototype, "className", {
 
 		get: function () {
-			return MenuItem.classNameProperty.get(this);
+			return MenuItemPrivate.classNameProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.classNameProperty.set(this, value);
+			MenuItemPrivate.classNameProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(MenuItem.prototype, "command", {
+	Object.defineProperty(MenuItem.prototype, "handler", {
 
 		get: function () {
-			return MenuItem.commandProperty.get(this);
+			return MenuItemPrivate.handlerProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.commandProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(MenuItem.prototype, "commandArgs", {
-
-		get: function () {
-			return MenuItem.commandArgsProperty.get(this);
-		},
-
-		set: function (value) {
-			MenuItem.commandArgsProperty.set(this, value);
+			MenuItemPrivate.handlerProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
@@ -4733,15 +4804,21 @@ var MenuItem = (function () {
 	Object.defineProperty(MenuItem.prototype, "submenu", {
 
 		get: function () {
-			return MenuItem.submenuProperty.get(this);
+			return MenuItemPrivate.submenuProperty.get(this);
 		},
 
 		set: function (value) {
-			MenuItem.submenuProperty.set(this, value);
+			MenuItemPrivate.submenuProperty.set(this, value);
 		},
 		enumerable: true,
 		configurable: true
 	});
+	return MenuItem;
+})();
+exports.MenuItem = MenuItem;
+
+var MenuItem;
+(function (MenuItem) {
 
 	MenuItem.Normal = MenuItemType.Normal;
 
@@ -4750,91 +4827,104 @@ var MenuItem = (function () {
 	MenuItem.Separator = MenuItemType.Separator;
 
 	MenuItem.Submenu = MenuItemType.Submenu;
+})(MenuItem = exports.MenuItem || (exports.MenuItem = {}));
 
-	MenuItem.changedSignal = new phosphor_signaling_1.Signal();
+var MenuItemPrivate;
+(function (MenuItemPrivate) {
 
-	MenuItem.typeProperty = new phosphor_properties_1.Property({
+	MenuItemPrivate.changedSignal = new phosphor_signaling_1.Signal();
+
+	MenuItemPrivate.typeProperty = new phosphor_properties_1.Property({
 		name: 'type',
 		value: MenuItemType.Normal,
 		coerce: function (owner, value) { return owner.submenu ? MenuItemType.Submenu : value; },
-		notify: MenuItem.changedSignal,
+		changed: function (owner) { MenuItemPrivate.checkedProperty.coerce(owner); },
+		notify: MenuItemPrivate.changedSignal,
 	});
 
-	MenuItem.textProperty = new phosphor_properties_1.Property({
+	MenuItemPrivate.textProperty = new phosphor_properties_1.Property({
 		name: 'text',
 		value: '',
-		notify: MenuItem.changedSignal,
+		notify: MenuItemPrivate.changedSignal,
 	});
 
-	MenuItem.iconProperty = new phosphor_properties_1.Property({
+	MenuItemPrivate.iconProperty = new phosphor_properties_1.Property({
 		name: 'icon',
 		value: '',
-		notify: MenuItem.changedSignal,
+		notify: MenuItemPrivate.changedSignal,
 	});
 
-	MenuItem.shortcutProperty = new phosphor_properties_1.Property({
+	MenuItemPrivate.shortcutProperty = new phosphor_properties_1.Property({
 		name: 'shortcut',
 		value: '',
-		notify: MenuItem.changedSignal,
+		notify: MenuItemPrivate.changedSignal,
 	});
 
-	MenuItem.classNameProperty = new phosphor_properties_1.Property({
+	MenuItemPrivate.checkedProperty = new phosphor_properties_1.Property({
+		name: 'checked',
+		value: false,
+		coerce: function (owner, value) { return owner.type === MenuItemType.Check ? value : false; },
+		notify: MenuItemPrivate.changedSignal,
+	});
+
+	MenuItemPrivate.disabledProperty = new phosphor_properties_1.Property({
+		name: 'disabled',
+		value: false,
+		notify: MenuItemPrivate.changedSignal,
+	});
+
+	MenuItemPrivate.classNameProperty = new phosphor_properties_1.Property({
 		name: 'className',
 		value: '',
-		notify: MenuItem.changedSignal,
+		notify: MenuItemPrivate.changedSignal,
 	});
 
-	MenuItem.commandProperty = new phosphor_properties_1.Property({
-		name: 'command',
+	MenuItemPrivate.handlerProperty = new phosphor_properties_1.Property({
+		name: 'handler',
 		value: null,
 		coerce: function (owner, value) { return value || null; },
-		notify: MenuItem.changedSignal,
+		notify: MenuItemPrivate.changedSignal,
 	});
 
-	MenuItem.commandArgsProperty = new phosphor_properties_1.Property({
-		name: 'commandArgs',
-		value: null,
-		coerce: function (owner, value) { return value || null; },
-		notify: MenuItem.changedSignal,
-	});
-
-	MenuItem.submenuProperty = new phosphor_properties_1.Property({
+	MenuItemPrivate.submenuProperty = new phosphor_properties_1.Property({
 		name: 'submenu',
 		value: null,
 		coerce: function (owner, value) { return value || null; },
-		changed: function (owner) { MenuItem.typeProperty.coerce(owner); },
-		notify: MenuItem.changedSignal,
+		changed: function (owner) { MenuItemPrivate.typeProperty.coerce(owner); },
+		notify: MenuItemPrivate.changedSignal,
 	});
-	return MenuItem;
-})();
-exports.MenuItem = MenuItem;
 
-function initFrom(item, options) {
-	if (options.type !== void 0) {
-		item.type = options.type;
+	function initFrom(item, options) {
+		if (options.type !== void 0) {
+			item.type = options.type;
+		}
+		if (options.text !== void 0) {
+			item.text = options.text;
+		}
+		if (options.icon !== void 0) {
+			item.icon = options.icon;
+		}
+		if (options.shortcut !== void 0) {
+			item.shortcut = options.shortcut;
+		}
+		if (options.checked !== void 0) {
+			item.checked = options.checked;
+		}
+		if (options.disabled !== void 0) {
+			item.disabled = options.disabled;
+		}
+		if (options.className !== void 0) {
+			item.className = options.className;
+		}
+		if (options.handler !== void 0) {
+			item.handler = options.handler;
+		}
+		if (options.submenu !== void 0) {
+			item.submenu = options.submenu;
+		}
 	}
-	if (options.text !== void 0) {
-		item.text = options.text;
-	}
-	if (options.icon !== void 0) {
-		item.icon = options.icon;
-	}
-	if (options.shortcut !== void 0) {
-		item.shortcut = options.shortcut;
-	}
-	if (options.className !== void 0) {
-		item.className = options.className;
-	}
-	if (options.command !== void 0) {
-		item.command = options.command;
-	}
-	if (options.commandArgs !== void 0) {
-		item.commandArgs = options.commandArgs;
-	}
-	if (options.submenu !== void 0) {
-		item.submenu = options.submenu;
-	}
-}
+	MenuItemPrivate.initFrom = initFrom;
+})(MenuItemPrivate || (MenuItemPrivate = {}));
 
 },{"phosphor-properties":34,"phosphor-signaling":35}],26:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
@@ -5275,6 +5365,7 @@ exports.Queue = Queue;
 'use strict';
 
 var NodeWrapper = (function () {
+
 	function NodeWrapper() {
 		this._node = this.constructor.createNode();
 	}
@@ -5342,10 +5433,111 @@ exports.NodeWrapper = NodeWrapper;
 },{}],30:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
 },{"./layout":31,"./panel":32,"dup":4}],31:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9,"phosphor-arrays":33,"phosphor-messaging":27,"phosphor-widget":52}],32:[function(require,module,exports){
+
+'use strict';
+var __extends = (this && this.__extends) || function (d, b) {
+	for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	function __() { this.constructor = d; }
+	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var arrays = require('phosphor-arrays');
+var phosphor_messaging_1 = require('phosphor-messaging');
+var phosphor_widget_1 = require('phosphor-widget');
+
+var PanelLayout = (function (_super) {
+	__extends(PanelLayout, _super);
+	function PanelLayout() {
+		_super.apply(this, arguments);
+		this._children = [];
+	}
+
+	PanelLayout.prototype.dispose = function () {
+		while (this._children.length > 0) {
+			this._children.pop().dispose();
+		}
+		_super.prototype.dispose.call(this);
+	};
+
+	PanelLayout.prototype.childCount = function () {
+		return this._children.length;
+	};
+
+	PanelLayout.prototype.childAt = function (index) {
+		return this._children[index];
+	};
+
+	PanelLayout.prototype.addChild = function (child) {
+		this.insertChild(this.childCount(), child);
+	};
+
+	PanelLayout.prototype.insertChild = function (index, child) {
+		child.parent = this.parent;
+		var n = this._children.length;
+		var i = this._children.indexOf(child);
+		var j = Math.max(0, Math.min(index | 0, n));
+		if (i !== -1) {
+			if (j === n)
+				j--;
+			if (i === j)
+				return;
+			arrays.move(this._children, i, j);
+			if (this.parent)
+				this.moveChild(i, j, child);
+		}
+		else {
+			arrays.insert(this._children, j, child);
+			if (this.parent)
+				this.attachChild(j, child);
+		}
+	};
+
+	PanelLayout.prototype.removeChild = function (child) {
+		var i = arrays.remove(this._children, child);
+		if (i !== -1 && this.parent)
+			this.detachChild(i, child);
+	};
+
+	PanelLayout.prototype.initialize = function () {
+		for (var i = 0; i < this.childCount(); ++i) {
+			var child = this.childAt(i);
+			child.parent = this.parent;
+			this.attachChild(i, child);
+		}
+	};
+
+	PanelLayout.prototype.attachChild = function (index, child) {
+		var ref = this.parent.node.children[index];
+		this.parent.node.insertBefore(child.node, ref);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
+	};
+
+	PanelLayout.prototype.moveChild = function (fromIndex, toIndex, child) {
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
+		this.parent.node.removeChild(child.node);
+		var ref = this.parent.node.children[toIndex];
+		this.parent.node.insertBefore(child.node, ref);
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
+	};
+
+	PanelLayout.prototype.detachChild = function (index, child) {
+		if (this.parent.isAttached)
+			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
+		this.parent.node.removeChild(child.node);
+	};
+
+	PanelLayout.prototype.onChildRemoved = function (msg) {
+		this.removeChild(msg.child);
+	};
+	return PanelLayout;
+})(phosphor_widget_1.AbstractLayout);
+exports.PanelLayout = PanelLayout;
+
+},{"phosphor-arrays":33,"phosphor-messaging":27,"phosphor-widget":50}],32:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"./layout":31,"dup":10,"phosphor-widget":52}],33:[function(require,module,exports){
+},{"./layout":31,"dup":10,"phosphor-widget":50}],33:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
 },{"dup":7}],34:[function(require,module,exports){
 
@@ -5780,6 +5972,8 @@ var phosphor_panel_1 = require('phosphor-panel');
 var phosphor_properties_1 = require('phosphor-properties');
 var phosphor_widget_1 = require('phosphor-widget');
 
+var HIDDEN_CLASS = 'p-mod-hidden';
+
 var HORIZONTAL_CLASS = 'p-mod-horizontal';
 
 var VERTICAL_CLASS = 'p-mod-vertical';
@@ -5871,16 +6065,16 @@ var SplitLayout = (function (_super) {
 	SplitLayout.prototype.moveHandle = function (index, position) {
 
 		var handle = this._handles[index];
-		if (!handle || handle.hidden) {
+		if (!handle || handle.classList.contains(HIDDEN_CLASS)) {
 			return;
 		}
 
 		var delta;
 		if (this._orientation === Orientation.Horizontal) {
-			delta = position - handle.node.offsetLeft;
+			delta = position - handle.offsetLeft;
 		}
 		else {
-			delta = position - handle.node.offsetTop;
+			delta = position - handle.offsetTop;
 		}
 
 		if (delta === 0) {
@@ -5917,7 +6111,7 @@ var SplitLayout = (function (_super) {
 		arrays.insert(this._handles, index, handle);
 		SplitLayoutPrivate.prepareGeometry(child);
 		this.parent.node.appendChild(child.node);
-		this.parent.node.appendChild(handle.node);
+		this.parent.node.appendChild(handle);
 		if (this.parent.isAttached)
 			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
 		this.parent.fit();
@@ -5935,7 +6129,7 @@ var SplitLayout = (function (_super) {
 		if (this.parent.isAttached)
 			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
 		this.parent.node.removeChild(child.node);
-		this.parent.node.removeChild(handle.node);
+		this.parent.node.removeChild(handle);
 		SplitLayoutPrivate.resetGeometry(child);
 		this.parent.fit();
 	};
@@ -5993,17 +6187,17 @@ var SplitLayout = (function (_super) {
 		for (var i = 0, n = this.childCount(); i < n; ++i) {
 			var handle = this._handles[i];
 			if (this.childAt(i).isHidden) {
-				handle.hidden = true;
+				handle.classList.add(HIDDEN_CLASS);
 			}
 			else {
-				handle.hidden = false;
+				handle.classList.remove(HIDDEN_CLASS);
 				lastHandle = handle;
 				nVisible++;
 			}
 		}
 
 		if (lastHandle)
-			lastHandle.hidden = true;
+			lastHandle.classList.add(HIDDEN_CLASS);
 
 		this._fixed = this._spacing * Math.max(0, nVisible - 1);
 
@@ -6175,7 +6369,7 @@ var SplitLayoutPrivate;
 
 	function createHandle(factory) {
 		var handle = factory.createHandle();
-		handle.node.style.position = 'absolute';
+		handle.style.position = 'absolute';
 		return handle;
 	}
 	SplitLayoutPrivate.createHandle = createHandle;
@@ -6235,7 +6429,7 @@ var SplitLayoutPrivate;
 	SplitLayoutPrivate.setGeometry = setGeometry;
 
 	function setHandleGeo(handle, left, top, width, height) {
-		var style = handle.node.style;
+		var style = handle.style;
 		style.top = top + "px";
 		style.left = left + "px";
 		style.width = width + "px";
@@ -6369,7 +6563,7 @@ var SplitLayoutPrivate;
 	}
 })(SplitLayoutPrivate || (SplitLayoutPrivate = {}));
 
-},{"phosphor-arrays":40,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":41,"phosphor-properties":34,"phosphor-widget":52}],39:[function(require,module,exports){
+},{"phosphor-arrays":40,"phosphor-boxengine":3,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":30,"phosphor-properties":34,"phosphor-widget":50}],39:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6378,7 +6572,6 @@ var __extends = (this && this.__extends) || function (d, b) {
 	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var phosphor_domutil_1 = require('phosphor-domutil');
-var phosphor_nodewrapper_1 = require('phosphor-nodewrapper');
 var phosphor_panel_1 = require('phosphor-panel');
 var layout_1 = require('./layout');
 
@@ -6387,29 +6580,6 @@ var SPLIT_PANEL_CLASS = 'p-SplitPanel';
 var CHILD_CLASS = 'p-SplitPanel-child';
 
 var HANDLE_CLASS = 'p-SplitPanel-handle';
-
-var HIDDEN_CLASS = 'p-mod-hidden';
-
-var SplitHandle = (function (_super) {
-	__extends(SplitHandle, _super);
-	function SplitHandle() {
-		_super.apply(this, arguments);
-	}
-	Object.defineProperty(SplitHandle.prototype, "hidden", {
-
-		get: function () {
-			return this.hasClass(HIDDEN_CLASS);
-		},
-
-		set: function (value) {
-			this.toggleClass(HIDDEN_CLASS, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	return SplitHandle;
-})(phosphor_nodewrapper_1.NodeWrapper);
-exports.SplitHandle = SplitHandle;
 
 var SplitPanel = (function (_super) {
 	__extends(SplitPanel, _super);
@@ -6425,8 +6595,8 @@ var SplitPanel = (function (_super) {
 	};
 
 	SplitPanel.createHandle = function () {
-		var handle = new SplitHandle();
-		handle.addClass(HANDLE_CLASS);
+		var handle = document.createElement('div');
+		handle.className = HANDLE_CLASS;
 		return handle;
 	};
 
@@ -6547,7 +6717,7 @@ var SplitPanel = (function (_super) {
 		document.addEventListener('contextmenu', this, true);
 
 		var delta;
-		var rect = handle.node.getBoundingClientRect();
+		var rect = handle.getBoundingClientRect();
 		if (layout.orientation === layout_1.Orientation.Horizontal) {
 			delta = event.clientX - rect.left;
 		}
@@ -6555,7 +6725,7 @@ var SplitPanel = (function (_super) {
 			delta = event.clientY - rect.top;
 		}
 
-		var style = window.getComputedStyle(handle.node);
+		var style = window.getComputedStyle(handle);
 		var override = phosphor_domutil_1.overrideCursor(style.cursor);
 		this._pressData = { index: index, delta: delta, override: override };
 	};
@@ -6634,7 +6804,7 @@ var SplitPanelPrivate;
 	function findHandle(layout, target) {
 		for (var i = 0, n = layout.childCount(); i < n; ++i) {
 			var handle = layout.handleAt(i);
-			if (handle.node.contains(target)) {
+			if (handle.contains(target)) {
 				return { index: i, handle: handle };
 			}
 		}
@@ -6643,17 +6813,11 @@ var SplitPanelPrivate;
 	SplitPanelPrivate.findHandle = findHandle;
 })(SplitPanelPrivate || (SplitPanelPrivate = {}));
 
-},{"./layout":38,"phosphor-domutil":17,"phosphor-nodewrapper":29,"phosphor-panel":41}],40:[function(require,module,exports){
+},{"./layout":38,"phosphor-domutil":17,"phosphor-panel":30}],40:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
 },{"dup":7}],41:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
 },{"./layout":42,"./panel":43,"dup":4}],42:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9,"phosphor-arrays":40,"phosphor-messaging":27,"phosphor-widget":52}],43:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"./layout":42,"dup":10,"phosphor-widget":52}],44:[function(require,module,exports){
-var css = ".p-StackedPanel{position:relative}.p-StackedPanel>.p-Widget{position:absolute}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-stackedpanel\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],45:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6663,115 +6827,36 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var phosphor_domutil_1 = require('phosphor-domutil');
 var phosphor_messaging_1 = require('phosphor-messaging');
+var phosphor_panel_1 = require('phosphor-panel');
 var phosphor_properties_1 = require('phosphor-properties');
-var phosphor_signaling_1 = require('phosphor-signaling');
 var phosphor_widget_1 = require('phosphor-widget');
-require('./index.css');
-
-var STACKED_PANEL_CLASS = 'p-StackedPanel';
-
-var StackedPanel = (function (_super) {
-	__extends(StackedPanel, _super);
-
-	function StackedPanel() {
-		var _this = this;
-		_super.call(this);
-		this.addClass(STACKED_PANEL_CLASS);
-		var layout = this.layout;
-		layout.currentChanged.connect(function (sender, args) {
-			_this.currentChanged.emit(args);
-		});
-		layout.widgetRemoved.connect(function (sender, args) {
-			_this.widgetRemoved.emit(args);
-		});
-	}
-
-	StackedPanel.createLayout = function () {
-		return new StackedLayout();
-	};
-	Object.defineProperty(StackedPanel.prototype, "currentChanged", {
-
-		get: function () {
-			return StackedPanelPrivate.currentChangedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(StackedPanel.prototype, "widgetRemoved", {
-
-		get: function () {
-			return StackedPanelPrivate.widgetRemovedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(StackedPanel.prototype, "currentWidget", {
-
-		get: function () {
-			return this.layout.currentWidget;
-		},
-
-		set: function (value) {
-			this.layout.currentWidget = value;
-		},
-		enumerable: true,
-		configurable: true
-	});
-	return StackedPanel;
-})(phosphor_widget_1.Panel);
-exports.StackedPanel = StackedPanel;
 
 var StackedLayout = (function (_super) {
 	__extends(StackedLayout, _super);
 	function StackedLayout() {
 		_super.apply(this, arguments);
+		this._box = null;
 	}
-	Object.defineProperty(StackedLayout.prototype, "currentChanged", {
-
-		get: function () {
-			return StackedLayoutPrivate.currentChangedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(StackedLayout.prototype, "widgetRemoved", {
-
-		get: function () {
-			return StackedLayoutPrivate.widgetRemovedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(StackedLayout.prototype, "currentWidget", {
-
-		get: function () {
-			return StackedLayoutPrivate.currentWidgetProperty.get(this);
-		},
-
-		set: function (value) {
-			StackedLayoutPrivate.currentWidgetProperty.set(this, value);
-		},
-		enumerable: true,
-		configurable: true
-	});
 
 	StackedLayout.prototype.attachChild = function (index, child) {
-		child.hide();
+		StackedLayoutPrivate.prepareGeometry(child);
 		this.parent.node.appendChild(child.node);
 		if (this.parent.isAttached)
 			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgAfterAttach);
+		this.parent.fit();
 	};
 
-	StackedLayout.prototype.moveChild = function (fromIndex, toIndex, child) { };
+	StackedLayout.prototype.moveChild = function (fromIndex, toIndex, child) {
+		this.parent.update();
+	};
 
 	StackedLayout.prototype.detachChild = function (index, child) {
-		if (child === this.currentWidget)
-			this.currentWidget = null;
 		if (this.parent.isAttached)
 			phosphor_messaging_1.sendMessage(child, phosphor_widget_1.Widget.MsgBeforeDetach);
 		this.parent.node.removeChild(child.node);
 		StackedLayoutPrivate.resetGeometry(child);
-		this.widgetRemoved.emit(child);
+		child.node.style.zIndex = '';
+		this.parent.fit();
 	};
 
 	StackedLayout.prototype.onAfterShow = function (msg) {
@@ -6784,51 +6869,125 @@ var StackedLayout = (function (_super) {
 		this.parent.fit();
 	};
 
+	StackedLayout.prototype.onChildShown = function (msg) {
+		if (StackedLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			this.parent.fit();
+		}
+	};
+
+	StackedLayout.prototype.onChildHidden = function (msg) {
+		if (StackedLayoutPrivate.IsIE) {
+			phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgFitRequest);
+		}
+		else {
+			this.parent.fit();
+		}
+	};
+
 	StackedLayout.prototype.onResize = function (msg) {
 		if (this.parent.isVisible) {
-			StackedLayoutPrivate.update(this, msg.width, msg.height);
+			this._update(msg.width, msg.height);
 		}
 	};
 
 	StackedLayout.prototype.onUpdateRequest = function (msg) {
 		if (this.parent.isVisible) {
-			StackedLayoutPrivate.update(this, -1, -1);
+			this._update(-1, -1);
 		}
 	};
 
 	StackedLayout.prototype.onFitRequest = function (msg) {
 		if (this.parent.isAttached) {
-			StackedLayoutPrivate.fit(this);
+			this._fit();
+		}
+	};
+
+	StackedLayout.prototype._fit = function () {
+
+		var minW = 0;
+		var minH = 0;
+		var maxW = Infinity;
+		var maxH = Infinity;
+
+		for (var i = 0, n = this.childCount(); i < n; ++i) {
+			var child = this.childAt(i);
+			if (child.isHidden) {
+				continue;
+			}
+			var limits = phosphor_domutil_1.sizeLimits(child.node);
+			minW = Math.max(minW, limits.minWidth);
+			minH = Math.max(minH, limits.minHeight);
+			maxW = Math.min(maxW, limits.maxWidth);
+			maxH = Math.min(maxH, limits.maxHeight);
+		}
+
+		maxW = Math.max(minW, maxW);
+		maxH = Math.max(minH, maxH);
+
+		var box = this._box = phosphor_domutil_1.boxSizing(this.parent.node);
+		minW += box.horizontalSum;
+		minH += box.verticalSum;
+		maxW += box.horizontalSum;
+		maxH += box.verticalSum;
+
+		var style = this.parent.node.style;
+		style.minWidth = minW + "px";
+		style.minHeight = minH + "px";
+		style.maxWidth = maxW === Infinity ? 'none' : maxW + "px";
+		style.maxHeight = maxH === Infinity ? 'none' : maxH + "px";
+
+		var ancestor = this.parent.parent;
+		if (ancestor)
+			phosphor_messaging_1.sendMessage(ancestor, phosphor_widget_1.Widget.MsgFitRequest);
+
+		phosphor_messaging_1.sendMessage(this.parent, phosphor_widget_1.Widget.MsgUpdateRequest);
+	};
+
+	StackedLayout.prototype._update = function (offsetWidth, offsetHeight) {
+
+		if (this.childCount() === 0) {
+			return;
+		}
+
+		if (offsetWidth < 0) {
+			offsetWidth = this.parent.node.offsetWidth;
+		}
+		if (offsetHeight < 0) {
+			offsetHeight = this.parent.node.offsetHeight;
+		}
+
+		var box = this._box || (this._box = phosphor_domutil_1.boxSizing(this.parent.node));
+
+		var top = box.paddingTop;
+		var left = box.paddingLeft;
+		var width = offsetWidth - box.horizontalSum;
+		var height = offsetHeight - box.verticalSum;
+
+		for (var i = 0, n = this.childCount(); i < n; ++i) {
+			var child = this.childAt(i);
+			if (child.isHidden) {
+				continue;
+			}
+			child.node.style.zIndex = "" + i;
+			StackedLayoutPrivate.setGeometry(child, left, top, width, height);
 		}
 	};
 	return StackedLayout;
-})(phosphor_widget_1.PanelLayout);
+})(phosphor_panel_1.PanelLayout);
 exports.StackedLayout = StackedLayout;
-
-var StackedPanelPrivate;
-(function (StackedPanelPrivate) {
-
-	StackedPanelPrivate.currentChangedSignal = new phosphor_signaling_1.Signal();
-
-	StackedPanelPrivate.widgetRemovedSignal = new phosphor_signaling_1.Signal();
-})(StackedPanelPrivate || (StackedPanelPrivate = {}));
 
 var StackedLayoutPrivate;
 (function (StackedLayoutPrivate) {
 
 	StackedLayoutPrivate.IsIE = /Trident/.test(navigator.userAgent);
 
-	StackedLayoutPrivate.currentChangedSignal = new phosphor_signaling_1.Signal();
-
-	StackedLayoutPrivate.widgetRemovedSignal = new phosphor_signaling_1.Signal();
-
-	StackedLayoutPrivate.currentWidgetProperty = new phosphor_properties_1.Property({
-		name: 'currentWidget',
-		value: null,
-		coerce: coerceCurrentWidget,
-		changed: onCurrentWidgetChanged,
-		notify: StackedLayoutPrivate.currentChangedSignal,
-	});
+	function prepareGeometry(widget) {
+		widget.node.style.position = 'absolute';
+	}
+	StackedLayoutPrivate.prepareGeometry = prepareGeometry;
 
 	function resetGeometry(widget) {
 		var rect = rectProperty.get(widget);
@@ -6837,6 +6996,7 @@ var StackedLayoutPrivate;
 		rect.left = NaN;
 		rect.width = NaN;
 		rect.height = NaN;
+		style.position = '';
 		style.top = '';
 		style.left = '';
 		style.width = '';
@@ -6844,137 +7004,97 @@ var StackedLayoutPrivate;
 	}
 	StackedLayoutPrivate.resetGeometry = resetGeometry;
 
-	function fit(layout) {
-
-		var parent = layout.parent;
-		if (!parent) {
-			return;
-		}
-
-		var minW = 0;
-		var minH = 0;
-		var maxW = Infinity;
-		var maxH = Infinity;
-		var widget = layout.currentWidget;
-		if (widget) {
-			var limits = phosphor_domutil_1.sizeLimits(widget.node);
-			minW = limits.minWidth;
-			minH = limits.minHeight;
-			maxW = limits.maxWidth;
-			maxH = limits.maxHeight;
-		}
-
-		var box = phosphor_domutil_1.boxSizing(parent.node);
-		boxSizingProperty.set(parent, box);
-		minW += box.horizontalSum;
-		minH += box.verticalSum;
-		maxW += box.horizontalSum;
-		maxH += box.verticalSum;
-
-		var style = parent.node.style;
-		style.minWidth = minW + 'px';
-		style.minHeight = minH + 'px';
-		style.maxWidth = maxW === Infinity ? 'none' : maxW + 'px';
-		style.maxHeight = maxH === Infinity ? 'none' : maxH + 'px';
-
-		if (parent.parent)
-			phosphor_messaging_1.sendMessage(parent.parent, phosphor_widget_1.Widget.MsgFitRequest);
-
-		phosphor_messaging_1.sendMessage(parent, phosphor_widget_1.Widget.MsgUpdateRequest);
-	}
-	StackedLayoutPrivate.fit = fit;
-
-	function update(layout, offsetWidth, offsetHeight) {
-
-		var widget = layout.currentWidget;
-		if (!widget) {
-			return;
-		}
-
-		var parent = layout.parent;
-		if (!parent) {
-			return;
-		}
-
-		if (offsetWidth < 0) {
-			offsetWidth = parent.node.offsetWidth;
-		}
-		if (offsetHeight < 0) {
-			offsetHeight = parent.node.offsetHeight;
-		}
-
-		var box = boxSizingProperty.get(parent);
-		var top = box.paddingTop;
-		var left = box.paddingLeft;
-		var width = offsetWidth - box.horizontalSum;
-		var height = offsetHeight - box.verticalSum;
-
-		setGeometry(widget, left, top, width, height);
-	}
-	StackedLayoutPrivate.update = update;
-
-	var rectProperty = new phosphor_properties_1.Property({
-		name: 'rect',
-		create: function () { return ({ top: NaN, left: NaN, width: NaN, height: NaN }); },
-	});
-
-	var boxSizingProperty = new phosphor_properties_1.Property({
-		name: 'boxSizing',
-		create: function (owner) { return phosphor_domutil_1.boxSizing(owner.node); },
-	});
-
-	function coerceCurrentWidget(owner, value) {
-		return (value && owner.childIndex(value) !== -1) ? value : null;
-	}
-
-	function onCurrentWidgetChanged(owner, old, val) {
-		if (old)
-			old.hide();
-		if (val)
-			val.show();
-		if (!owner.parent)
-			return;
-
-
-		if (StackedLayoutPrivate.IsIE) {
-			phosphor_messaging_1.sendMessage(owner.parent, phosphor_widget_1.Widget.MsgFitRequest);
-		}
-		else {
-			owner.parent.fit();
-		}
-	}
-
 	function setGeometry(widget, left, top, width, height) {
 		var resized = false;
 		var style = widget.node.style;
 		var rect = rectProperty.get(widget);
 		if (rect.top !== top) {
 			rect.top = top;
-			style.top = top + 'px';
+			style.top = top + "px";
 		}
 		if (rect.left !== left) {
 			rect.left = left;
-			style.left = left + 'px';
+			style.left = left + "px";
 		}
 		if (rect.width !== width) {
 			resized = true;
 			rect.width = width;
-			style.width = width + 'px';
+			style.width = width + "px";
 		}
 		if (rect.height !== height) {
 			resized = true;
 			rect.height = height;
-			style.height = height + 'px';
+			style.height = height + "px";
 		}
 		if (resized) {
 			phosphor_messaging_1.sendMessage(widget, new phosphor_widget_1.ResizeMessage(width, height));
 		}
 	}
+	StackedLayoutPrivate.setGeometry = setGeometry;
+
+	var rectProperty = new phosphor_properties_1.Property({
+		name: 'rect',
+		create: function () { return ({ top: NaN, left: NaN, width: NaN, height: NaN }); },
+	});
 })(StackedLayoutPrivate || (StackedLayoutPrivate = {}));
 
-},{"./index.css":44,"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-widget":52}],46:[function(require,module,exports){
-var css = ".p-TabBar{position:relative;z-index:0}.p-TabBar-header{display:none;position:absolute;top:0;left:0;right:0;z-index:0}.p-TabBar-body{position:absolute;top:0;left:0;right:0;bottom:0;z-index:2}.p-TabBar-footer{display:none;position:absolute;left:0;right:0;bottom:0;z-index:1}.p-TabBar-content{margin:0;padding:0;height:100%;display:flex;flex-direction:row;list-style-type:none}.p-TabBar-tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-TabBar-tab-close,.p-TabBar-tab-icon{flex:0 0 auto}.p-TabBar-tab-text{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging .p-TabBar-tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging .p-TabBar-tab.p-mod-dragging{transition:none}.p-TabPanel{position:relative;z-index:0}.p-TabPanel>.p-Widget{position:absolute}.p-TabPanel>.p-TabBar{z-index:1}.p-TabPanel>.p-StackedPanel{z-index:0}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-tabs\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],47:[function(require,module,exports){
+},{"phosphor-domutil":17,"phosphor-messaging":27,"phosphor-panel":30,"phosphor-properties":34,"phosphor-widget":50}],43:[function(require,module,exports){
+
+'use strict';
+var __extends = (this && this.__extends) || function (d, b) {
+	for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	function __() { this.constructor = d; }
+	d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var phosphor_panel_1 = require('phosphor-panel');
+var phosphor_signaling_1 = require('phosphor-signaling');
+var layout_1 = require('./layout');
+
+var STACKED_PANEL_CLASS = 'p-StackedPanel';
+
+var CHILD_CLASS = 'p-StackedPanel-child';
+
+var StackedPanel = (function (_super) {
+	__extends(StackedPanel, _super);
+
+	function StackedPanel() {
+		_super.call(this);
+		this.addClass(STACKED_PANEL_CLASS);
+	}
+
+	StackedPanel.createLayout = function () {
+		return new layout_1.StackedLayout();
+	};
+	Object.defineProperty(StackedPanel.prototype, "widgetRemoved", {
+
+		get: function () {
+			return StackedPanelPrivate.widgetRemovedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	StackedPanel.prototype.onChildAdded = function (msg) {
+		msg.child.addClass(CHILD_CLASS);
+	};
+
+	StackedPanel.prototype.onChildRemoved = function (msg) {
+		msg.child.removeClass(CHILD_CLASS);
+		this.widgetRemoved.emit(msg.child);
+	};
+	return StackedPanel;
+})(phosphor_panel_1.Panel);
+exports.StackedPanel = StackedPanel;
+
+var StackedPanelPrivate;
+(function (StackedPanelPrivate) {
+
+	StackedPanelPrivate.widgetRemovedSignal = new phosphor_signaling_1.Signal();
+})(StackedPanelPrivate || (StackedPanelPrivate = {}));
+
+},{"./layout":42,"phosphor-panel":30,"phosphor-signaling":35}],44:[function(require,module,exports){
+var css = ".p-TabBar{display:flex;flex-direction:column}.p-TabBar-footer,.p-TabBar-header{flex:0 0 auto}.p-TabBar-body{display:flex;flex-direction:row;flex:1 1 auto}.p-TabBar-content{display:flex;flex-direction:row;flex:1 1 auto;margin:0;padding:0;list-style-type:none}.p-TabBar-tab{display:flex;flex-direction:row;box-sizing:border-box;overflow:hidden}.p-TabBar-tabCloseIcon,.p-TabBar-tabIcon{flex:0 0 auto}.p-TabBar-tabText{flex:1 1 auto;overflow:hidden;white-space:nowrap}.p-TabBar.p-mod-dragging .p-TabBar-tab{position:relative;left:0;transition:left 150ms ease}.p-TabBar.p-mod-dragging .p-TabBar-tab.p-mod-dragging{transition:none}.p-TabPanel-tabBar{z-index:1}.p-TabPanel-stackedPanel{z-index:0}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-tabs\\lib\\index.css"})); module.exports = css;
+},{"browserify-css":2}],45:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -6984,7 +7104,7 @@ __export(require('./tabbar'));
 __export(require('./tabpanel'));
 require('./index.css');
 
-},{"./index.css":46,"./tabbar":48,"./tabpanel":49}],48:[function(require,module,exports){
+},{"./index.css":44,"./tabbar":46,"./tabpanel":47}],46:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -6994,16 +7114,14 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var arrays = require('phosphor-arrays');
 var phosphor_domutil_1 = require('phosphor-domutil');
-var phosphor_properties_1 = require('phosphor-properties');
 var phosphor_signaling_1 = require('phosphor-signaling');
 var phosphor_widget_1 = require('phosphor-widget');
 
-
 var TAB_BAR_CLASS = 'p-TabBar';
 
-var HEADER_CLASS = 'p-TabBar-header';
-
 var BODY_CLASS = 'p-TabBar-body';
+
+var HEADER_CLASS = 'p-TabBar-header';
 
 var CONTENT_CLASS = 'p-TabBar-content';
 
@@ -7011,11 +7129,11 @@ var FOOTER_CLASS = 'p-TabBar-footer';
 
 var TAB_CLASS = 'p-TabBar-tab';
 
-var TEXT_CLASS = 'p-TabBar-tab-text';
+var TEXT_CLASS = 'p-TabBar-tabText';
 
-var ICON_CLASS = 'p-TabBar-tab-icon';
+var ICON_CLASS = 'p-TabBar-tabIcon';
 
-var CLOSE_CLASS = 'p-TabBar-tab-close';
+var CLOSE_CLASS = 'p-TabBar-tabCloseIcon';
 
 var DRAGGING_CLASS = 'p-mod-dragging';
 
@@ -7034,9 +7152,11 @@ var TabBar = (function (_super) {
 
 	function TabBar() {
 		_super.call(this);
-		this._dirty = false;
 		this._tabsMovable = false;
-		this._titles = [];
+		this._items = [];
+		this._tabs = [];
+		this._dirtySet = new Set();
+		this._currentItem = null;
 		this._dragData = null;
 		this.addClass(TAB_BAR_CLASS);
 	}
@@ -7045,12 +7165,12 @@ var TabBar = (function (_super) {
 		var node = document.createElement('div');
 		var header = document.createElement('div');
 		var body = document.createElement('div');
-		var content = document.createElement('ul');
 		var footer = document.createElement('div');
+		var content = document.createElement('ul');
 		header.className = HEADER_CLASS;
 		body.className = BODY_CLASS;
-		content.className = CONTENT_CLASS;
 		footer.className = FOOTER_CLASS;
+		content.className = CONTENT_CLASS;
 		body.appendChild(content);
 		node.appendChild(header);
 		node.appendChild(body);
@@ -7058,11 +7178,53 @@ var TabBar = (function (_super) {
 		return node;
 	};
 
+	TabBar.createTab = function (title) {
+		var node = document.createElement('li');
+		var icon = document.createElement('span');
+		var text = document.createElement('span');
+		var close = document.createElement('span');
+		node.className = TAB_CLASS;
+		icon.className = ICON_CLASS;
+		text.className = TEXT_CLASS;
+		close.className = CLOSE_CLASS;
+		node.appendChild(icon);
+		node.appendChild(text);
+		node.appendChild(close);
+		this.updateTab(node, title);
+		return node;
+	};
+
+	TabBar.updateTab = function (tab, title) {
+		var tabInfix = title.className ? ' ' + title.className : '';
+		var tabSuffix = title.closable ? ' ' + CLOSABLE_CLASS : '';
+		var iconSuffix = title.icon ? ' ' + title.icon : '';
+		var icon = tab.firstChild;
+		var text = icon.nextSibling;
+		tab.className = TAB_CLASS + tabInfix + tabSuffix;
+		icon.className = ICON_CLASS + iconSuffix;
+		text.textContent = title.text;
+	};
+
+	TabBar.tabCloseIcon = function (tab) {
+		return tab.lastChild;
+	};
+
 	TabBar.prototype.dispose = function () {
 		this._releaseMouse();
-		this._titles.length = 0;
+		this._tabs.length = 0;
+		this._items.length = 0;
+		this._dirtySet.clear();
+		this._currentItem = null;
 		_super.prototype.dispose.call(this);
 	};
+	Object.defineProperty(TabBar.prototype, "currentChanged", {
+
+		get: function () {
+			return TabBarPrivate.currentChangedSignal.bind(this);
+		},
+		enumerable: true,
+		configurable: true
+	});
 	Object.defineProperty(TabBar.prototype, "tabMoved", {
 
 		get: function () {
@@ -7087,22 +7249,25 @@ var TabBar = (function (_super) {
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(TabBar.prototype, "currentChanged", {
+	Object.defineProperty(TabBar.prototype, "currentItem", {
 
 		get: function () {
-			return TabBarPrivate.currentChangedSignal.bind(this);
-		},
-		enumerable: true,
-		configurable: true
-	});
-	Object.defineProperty(TabBar.prototype, "currentTitle", {
-
-		get: function () {
-			return TabBarPrivate.currentTitleProperty.get(this);
+			return this._currentItem;
 		},
 
 		set: function (value) {
-			TabBarPrivate.currentTitleProperty.set(this, value);
+			var item = value || null;
+			if (this._currentItem === item) {
+				return;
+			}
+			var index = item ? this._items.indexOf(item) : -1;
+			if (item && index === -1) {
+				console.warn('Tab item not contained in tab bar.');
+				return;
+			}
+			this._currentItem = item;
+			this.currentChanged.emit({ index: index, item: item });
+			this.update();
 		},
 		enumerable: true,
 		configurable: true
@@ -7135,14 +7300,6 @@ var TabBar = (function (_super) {
 		enumerable: true,
 		configurable: true
 	});
-	Object.defineProperty(TabBar.prototype, "contentNode", {
-
-		get: function () {
-			return this.node.getElementsByClassName(CONTENT_CLASS)[0];
-		},
-		enumerable: true,
-		configurable: true
-	});
 	Object.defineProperty(TabBar.prototype, "footerNode", {
 
 		get: function () {
@@ -7151,65 +7308,76 @@ var TabBar = (function (_super) {
 		enumerable: true,
 		configurable: true
 	});
+	Object.defineProperty(TabBar.prototype, "contentNode", {
 
-	TabBar.prototype.titleCount = function () {
-		return this._titles.length;
+		get: function () {
+			return this.node.getElementsByClassName(CONTENT_CLASS)[0];
+		},
+		enumerable: true,
+		configurable: true
+	});
+
+	TabBar.prototype.itemCount = function () {
+		return this._items.length;
 	};
 
-	TabBar.prototype.titleAt = function (index) {
-		return this._titles[index];
+	TabBar.prototype.itemAt = function (index) {
+		return this._items[index];
 	};
 
-	TabBar.prototype.titleIndex = function (title) {
-		return this._titles.indexOf(title);
+	TabBar.prototype.itemIndex = function (item) {
+		return this._items.indexOf(item);
 	};
 
-	TabBar.prototype.addTitle = function (title) {
-		this.insertTitle(this.titleCount(), title);
+	TabBar.prototype.addItem = function (item) {
+		this.insertItem(this.itemCount(), item);
 	};
 
-	TabBar.prototype.insertTitle = function (index, title) {
-
+	TabBar.prototype.insertItem = function (index, item) {
 		this._releaseMouse();
-
-		var n = this.titleCount();
-		var i = this.titleIndex(title);
+		var n = this._items.length;
+		var i = this._items.indexOf(item);
 		var j = Math.max(0, Math.min(index | 0, n));
 		if (i !== -1) {
 			if (j === n)
 				j--;
 			if (i === j)
 				return;
-			arrays.move(this._titles, i, j);
+			arrays.move(this._tabs, i, j);
+			arrays.move(this._items, i, j);
+			this.contentNode.insertBefore(this._tabs[j], this._tabs[j + 1]);
 		}
 		else {
-			arrays.insert(this._titles, j, title);
-			title.changed.connect(this._onTitleChanged, this);
-			if (!this.currentTitle)
-				this.currentTitle = title;
+			var tab = this.constructor.createTab(item.title);
+			arrays.insert(this._tabs, j, tab);
+			arrays.insert(this._items, j, item);
+			this.contentNode.insertBefore(tab, this._tabs[j + 1]);
+			item.title.changed.connect(this._onTitleChanged, this);
+			if (!this.currentItem)
+				this.currentItem = item;
 		}
-
-		this._dirty = true;
 		this.update();
 	};
 
-	TabBar.prototype.removeTitle = function (title) {
-
+	TabBar.prototype.removeItem = function (item) {
 		this._releaseMouse();
-
-		var i = arrays.remove(this._titles, title);
+		var i = arrays.remove(this._items, item);
 		if (i === -1) {
 			return;
 		}
-
-		title.changed.disconnect(this._onTitleChanged, this);
-
-		if (this.currentTitle === title) {
-			this.currentTitle = this._titles[i] || this._titles[i - 1];
+		this._dirtySet.delete(item.title);
+		item.title.changed.disconnect(this._onTitleChanged, this);
+		this.contentNode.removeChild(arrays.removeAt(this._tabs, i));
+		if (this.currentItem === item) {
+			var next = this._items[i];
+			var prev = this._items[i - 1];
+			this.currentItem = next || prev;
 		}
-
-		this._dirty = true;
 		this.update();
+	};
+
+	TabBar.prototype.tabAt = function (index) {
+		return this._tabs[index];
 	};
 
 	TabBar.prototype.releaseMouse = function () {
@@ -7246,19 +7414,33 @@ var TabBar = (function (_super) {
 	};
 
 	TabBar.prototype.onBeforeDetach = function (msg) {
-		this._releaseMouse();
 		this.node.removeEventListener('click', this);
 		this.node.removeEventListener('mousedown', this);
+		this._releaseMouse();
 	};
 
 	TabBar.prototype.onUpdateRequest = function (msg) {
-		if (this._dirty) {
-			this._dirty = false;
-			TabBarPrivate.updateTabs(this);
+		var tabs = this._tabs;
+		var items = this._items;
+		var dirty = this._dirtySet;
+		var current = this._currentItem;
+		var constructor = this.constructor;
+		for (var i = 0, n = tabs.length; i < n; ++i) {
+			var tab = tabs[i];
+			var item = items[i];
+			if (dirty.has(item.title)) {
+				constructor.updateTab(tab, item.title);
+			}
+			if (item === current) {
+				tab.classList.add(CURRENT_CLASS);
+				tab.style.zIndex = "" + n;
+			}
+			else {
+				tab.classList.remove(CURRENT_CLASS);
+				tab.style.zIndex = "" + (n - i - 1);
+			}
 		}
-		else {
-			TabBarPrivate.updateZOrder(this);
-		}
+		dirty.clear();
 	};
 
 	TabBar.prototype._evtKeyDown = function (event) {
@@ -7280,7 +7462,9 @@ var TabBar = (function (_super) {
 			return;
 		}
 
-		var i = TabBarPrivate.hitTestTabs(this, event.clientX, event.clientY);
+		var x = event.clientX;
+		var y = event.clientY;
+		var i = arrays.findIndex(this._tabs, function (tab) { return phosphor_domutil_1.hitTest(tab, x, y); });
 		if (i < 0) {
 			return;
 		}
@@ -7288,17 +7472,18 @@ var TabBar = (function (_super) {
 		event.preventDefault();
 		event.stopPropagation();
 
-		var title = this._titles[i];
-		if (!title.closable) {
+		var item = this._items[i];
+		if (!item.title.closable) {
 			return;
 		}
 
-		var icon = TabBarPrivate.closeIconNode(this, i);
+		var constructor = this.constructor;
+		var icon = constructor.tabCloseIcon(this._tabs[i]);
 		if (!icon.contains(event.target)) {
 			return;
 		}
 
-		this.tabCloseRequested.emit(title);
+		this.tabCloseRequested.emit({ index: i, item: item });
 	};
 
 	TabBar.prototype._evtMouseDown = function (event) {
@@ -7311,7 +7496,9 @@ var TabBar = (function (_super) {
 			return;
 		}
 
-		var i = TabBarPrivate.hitTestTabs(this, event.clientX, event.clientY);
+		var x = event.clientX;
+		var y = event.clientY;
+		var i = arrays.findIndex(this._tabs, function (tab) { return phosphor_domutil_1.hitTest(tab, x, y); });
 		if (i < 0) {
 			return;
 		}
@@ -7319,20 +7506,25 @@ var TabBar = (function (_super) {
 		event.preventDefault();
 		event.stopPropagation();
 
-		var icon = TabBarPrivate.closeIconNode(this, i);
+		var constructor = this.constructor;
+		var icon = constructor.tabCloseIcon(this._tabs[i]);
 		if (icon.contains(event.target)) {
 			return;
 		}
 
 		if (this._tabsMovable) {
-			this._dragData = TabBarPrivate.initDrag(i, event);
+			this._dragData = new TabBarPrivate.DragData();
+			this._dragData.index = i;
+			this._dragData.tab = this._tabs[i];
+			this._dragData.pressX = event.clientX;
+			this._dragData.pressY = event.clientY;
 			document.addEventListener('mousemove', this, true);
 			document.addEventListener('mouseup', this, true);
 			document.addEventListener('keydown', this, true);
 			document.addEventListener('contextmenu', this, true);
 		}
 
-		this.currentTitle = this._titles[i];
+		this.currentItem = this._items[i];
 	};
 
 	TabBar.prototype._evtMouseMove = function (event) {
@@ -7344,7 +7536,40 @@ var TabBar = (function (_super) {
 		event.preventDefault();
 		event.stopPropagation();
 
-		TabBarPrivate.moveDrag(this, this._dragData, event);
+		var data = this._dragData;
+		if (!data.dragActive) {
+			var dx = Math.abs(event.clientX - data.pressX);
+			var dy = Math.abs(event.clientY - data.pressY);
+			if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
+				return;
+			}
+
+			var tabRect = data.tab.getBoundingClientRect();
+			data.tabLeft = data.tab.offsetLeft;
+			data.tabWidth = tabRect.width;
+			data.tabPressX = data.pressX - tabRect.left;
+			data.tabLayout = TabBarPrivate.snapTabLayout(this._tabs);
+			data.contentRect = this.contentNode.getBoundingClientRect();
+			data.override = phosphor_domutil_1.overrideCursor('default');
+
+			data.tab.classList.add(DRAGGING_CLASS);
+			this.addClass(DRAGGING_CLASS);
+			data.dragActive = true;
+		}
+
+		if (!data.detachRequested && TabBarPrivate.detachExceeded(data, event)) {
+			data.detachRequested = true;
+			var index = data.index;
+			var item = this._items[index];
+			var clientX = event.clientX;
+			var clientY = event.clientY;
+			this.tabDetachRequested.emit({ index: index, item: item, clientX: clientX, clientY: clientY });
+			if (data.dragAborted) {
+				return;
+			}
+		}
+
+		TabBarPrivate.layoutTabs(this._tabs, data, event);
 	};
 
 	TabBar.prototype._evtMouseUp = function (event) {
@@ -7366,10 +7591,42 @@ var TabBar = (function (_super) {
 		document.removeEventListener('keydown', this, true);
 		document.removeEventListener('contextmenu', this, true);
 
-		TabBarPrivate.endDrag(this, this._dragData, event, {
-			clear: function () { _this._dragData = null; },
-			move: function (i, j) { _this._moveTab(i, j); },
-		});
+		var data = this._dragData;
+		if (!data.dragActive) {
+			this._dragData = null;
+			return;
+		}
+
+		TabBarPrivate.finalizeTabPosition(data);
+
+		data.tab.classList.remove(DRAGGING_CLASS);
+
+		setTimeout(function () {
+
+			if (data.dragAborted) {
+				return;
+			}
+
+			_this._dragData = null;
+
+			TabBarPrivate.resetTabPositions(_this._tabs);
+
+			data.override.dispose();
+			_this.removeClass(DRAGGING_CLASS);
+
+			var i = data.index;
+			var j = data.targetIndex;
+			if (j === -1 || i === j) {
+				return;
+			}
+
+			arrays.move(_this._tabs, i, j);
+			arrays.move(_this._items, i, j);
+			_this.contentNode.insertBefore(_this._tabs[j], _this._tabs[j + 1]);
+
+			_this.tabMoved.emit({ fromIndex: i, toIndex: j, item: _this._items[j] });
+			_this.update();
+		}, TRANSITION_DURATION);
 	};
 
 	TabBar.prototype._releaseMouse = function () {
@@ -7383,61 +7640,30 @@ var TabBar = (function (_super) {
 		document.removeEventListener('keydown', this, true);
 		document.removeEventListener('contextmenu', this, true);
 
-		TabBarPrivate.abortDrag(this, this._dragData);
+		var data = this._dragData;
 		this._dragData = null;
-	};
 
-	TabBar.prototype._moveTab = function (i, j) {
-		var k = j < i ? j : j + 1;
-		var content = this.contentNode;
-		var children = content.children;
-		arrays.move(this._titles, i, j);
-		content.insertBefore(children[i], children[k]);
-		this.tabMoved.emit({ fromIndex: i, toIndex: j });
-		this.update();
+
+		data.dragAborted = true;
+
+		if (!data.dragActive) {
+			return;
+		}
+
+		TabBarPrivate.resetTabPositions(this._tabs);
+
+		data.override.dispose();
+		data.tab.classList.remove(DRAGGING_CLASS);
+		this.removeClass(DRAGGING_CLASS);
 	};
 
 	TabBar.prototype._onTitleChanged = function (sender) {
-		this._dirty = true;
+		this._dirtySet.add(sender);
 		this.update();
 	};
 	return TabBar;
 })(phosphor_widget_1.Widget);
 exports.TabBar = TabBar;
-
-var DragData = (function () {
-	function DragData() {
-
-		this.tab = null;
-
-		this.tabIndex = -1;
-
-		this.tabLeft = -1;
-
-		this.tabWidth = -1;
-
-		this.tabPressX = -1;
-
-		this.targetIndex = -1;
-
-		this.tabLayout = null;
-
-		this.pressX = -1;
-
-		this.pressY = -1;
-
-		this.contentRect = null;
-
-		this.cursorGrab = null;
-
-		this.dragActive = false;
-
-		this.dragAborted = false;
-
-		this.detachRequested = false;
-	}
-	return DragData;
-})();
 
 var TabBarPrivate;
 (function (TabBarPrivate) {
@@ -7450,277 +7676,121 @@ var TabBarPrivate;
 
 	TabBarPrivate.tabDetachRequestedSignal = new phosphor_signaling_1.Signal();
 
-	TabBarPrivate.currentTitleProperty = new phosphor_properties_1.Property({
-		name: 'currentTitle',
-		value: null,
-		coerce: coerceCurrentTitle,
-		changed: onCurrentTitleChanged,
-		notify: TabBarPrivate.currentChangedSignal,
-	});
+	var DragData = (function () {
+		function DragData() {
 
-	function closeIconNode(owner, index) {
-		return owner.contentNode.children[index].lastChild;
-	}
-	TabBarPrivate.closeIconNode = closeIconNode;
+			this.tab = null;
 
-	function hitTestTabs(owner, x, y) {
-		var nodes = owner.contentNode.children;
-		for (var i = 0, n = nodes.length; i < n; ++i) {
-			if (phosphor_domutil_1.hitTest(nodes[i], x, y))
-				return i;
+			this.index = -1;
+
+			this.tabLeft = -1;
+
+			this.tabWidth = -1;
+
+			this.tabPressX = -1;
+
+			this.targetIndex = -1;
+
+			this.tabLayout = null;
+
+			this.pressX = -1;
+
+			this.pressY = -1;
+
+			this.contentRect = null;
+
+			this.override = null;
+
+			this.dragActive = false;
+
+			this.dragAborted = false;
+
+			this.detachRequested = false;
 		}
-		return -1;
-	}
-	TabBarPrivate.hitTestTabs = hitTestTabs;
+		return DragData;
+	})();
+	TabBarPrivate.DragData = DragData;
 
-	function updateTabs(owner) {
-		var count = owner.titleCount();
-		var content = owner.contentNode;
-		var children = content.children;
-		var current = owner.currentTitle;
-		while (children.length > count) {
-			content.removeChild(content.lastChild);
-		}
-		while (children.length < count) {
-			content.appendChild(createTabNode());
-		}
-		for (var i = 0; i < count; ++i) {
-			var node = children[i];
-			updateTabNode(node, owner.titleAt(i));
-		}
-		updateZOrder(owner);
-	}
-	TabBarPrivate.updateTabs = updateTabs;
-
-	function updateZOrder(owner) {
-		var count = owner.titleCount();
-		var content = owner.contentNode;
-		var children = content.children;
-		var current = owner.currentTitle;
-		for (var i = 0; i < count; ++i) {
-			var node = children[i];
-			if (owner.titleAt(i) === current) {
-				node.classList.add(CURRENT_CLASS);
-				node.style.zIndex = count + '';
-			}
-			else {
-				node.classList.remove(CURRENT_CLASS);
-				node.style.zIndex = count - i - 1 + '';
-			}
-		}
-	}
-	TabBarPrivate.updateZOrder = updateZOrder;
-
-	function initDrag(tabIndex, event) {
-		var data = new DragData();
-		data.tabIndex = tabIndex;
-		data.pressX = event.clientX;
-		data.pressY = event.clientY;
-		return data;
-	}
-	TabBarPrivate.initDrag = initDrag;
-
-	function moveDrag(owner, data, event) {
-
-		if (!data.dragActive) {
-			var dx = Math.abs(event.clientX - data.pressX);
-			var dy = Math.abs(event.clientY - data.pressY);
-			if (dx < DRAG_THRESHOLD && dy < DRAG_THRESHOLD) {
-				return;
-			}
-
-			var content = owner.contentNode;
-			var tab = content.children[data.tabIndex];
-			var tabRect = tab.getBoundingClientRect();
-			data.tab = tab;
-			data.tabLeft = tab.offsetLeft;
-			data.tabWidth = tabRect.width;
-			data.tabPressX = data.pressX - tabRect.left;
-			data.contentRect = content.getBoundingClientRect();
-			data.tabLayout = snapTabLayout(owner);
-			data.cursorGrab = phosphor_domutil_1.overrideCursor('default');
-
-			tab.classList.add(DRAGGING_CLASS);
-			owner.addClass(DRAGGING_CLASS);
-			data.dragActive = true;
-		}
-
-		if (!data.detachRequested && detachExceeded(data.contentRect, event)) {
-			var node = data.tab;
-			var clientX = event.clientX;
-			var clientY = event.clientY;
-			var title = owner.titleAt(data.tabIndex);
-			owner.tabDetachRequested.emit({ title: title, node: node, clientX: clientX, clientY: clientY });
-			data.detachRequested = true;
-			if (data.dragAborted) {
-				return;
-			}
-		}
-
-		var offsetLeft = event.clientX - data.contentRect.left;
-		var targetLeft = offsetLeft - data.tabPressX;
-		var targetRight = targetLeft + data.tabWidth;
-
-		data.targetIndex = data.tabIndex;
-
-		var tabs = owner.contentNode.children;
+	function snapTabLayout(tabs) {
+		var layout = new Array(tabs.length);
 		for (var i = 0, n = tabs.length; i < n; ++i) {
-			var layout = data.tabLayout[i];
-			var style = tabs[i].style;
-			var threshold = layout.left + (layout.width >> 1);
-			if (i < data.tabIndex && targetLeft < threshold) {
-				style.left = data.tabWidth + data.tabLayout[i + 1].margin + 'px';
-				data.targetIndex = Math.min(data.targetIndex, i);
-			}
-			else if (i > data.tabIndex && targetRight > threshold) {
-				style.left = -data.tabWidth - layout.margin + 'px';
-				data.targetIndex = i;
-			}
-			else if (i !== data.tabIndex) {
-				style.left = '';
-			}
-		}
-
-		var idealLeft = event.clientX - data.pressX;
-		var maxLeft = data.contentRect.width - (data.tabLeft + data.tabWidth);
-		var adjustedLeft = Math.max(-data.tabLeft, Math.min(idealLeft, maxLeft));
-		data.tab.style.left = adjustedLeft + 'px';
-	}
-	TabBarPrivate.moveDrag = moveDrag;
-
-	function endDrag(owner, data, event, handler) {
-
-		if (!data.dragActive) {
-			handler.clear();
-			return;
-		}
-
-		var idealLeft;
-		if (data.targetIndex === data.tabIndex) {
-			idealLeft = 0;
-		}
-		else if (data.targetIndex > data.tabIndex) {
-			var tl = data.tabLayout[data.targetIndex];
-			idealLeft = tl.left + tl.width - data.tabWidth - data.tabLeft;
-		}
-		else {
-			var tl = data.tabLayout[data.targetIndex];
-			idealLeft = tl.left - data.tabLeft;
-		}
-
-		var maxLeft = data.contentRect.width - (data.tabLeft + data.tabWidth);
-		var adjustedLeft = Math.max(-data.tabLeft, Math.min(idealLeft, maxLeft));
-		data.tab.style.left = adjustedLeft + 'px';
-
-		data.tab.classList.remove(DRAGGING_CLASS);
-
-		setTimeout(function () {
-
-			if (data.dragAborted) {
-				return;
-			}
-
-			handler.clear();
-
-			resetTabPositions(owner);
-
-			data.cursorGrab.dispose();
-			owner.removeClass(DRAGGING_CLASS);
-
-			if (data.targetIndex !== -1 && data.tabIndex !== data.targetIndex) {
-				handler.move(data.tabIndex, data.targetIndex);
-			}
-		}, TRANSITION_DURATION);
-	}
-	TabBarPrivate.endDrag = endDrag;
-
-	function abortDrag(owner, data) {
-
-
-		data.dragAborted = true;
-
-		if (!data.dragActive) {
-			return;
-		}
-
-		resetTabPositions(owner);
-
-		data.cursorGrab.dispose();
-		data.tab.classList.remove(DRAGGING_CLASS);
-		owner.removeClass(DRAGGING_CLASS);
-	}
-	TabBarPrivate.abortDrag = abortDrag;
-
-	function coerceCurrentTitle(owner, value) {
-		return (value && owner.titleIndex(value) !== -1) ? value : null;
-	}
-
-	function onCurrentTitleChanged(owner) {
-		owner.update();
-	}
-
-	function createTabNode() {
-		var node = document.createElement('li');
-		var icon = document.createElement('span');
-		var text = document.createElement('span');
-		var close = document.createElement('span');
-		text.className = TEXT_CLASS;
-		close.className = CLOSE_CLASS;
-		node.appendChild(icon);
-		node.appendChild(text);
-		node.appendChild(close);
-		return node;
-	}
-
-	function updateTabNode(node, title) {
-		var icon = node.firstChild;
-		var text = icon.nextSibling;
-		var suffix = title.closable ? ' ' + CLOSABLE_CLASS : '';
-		if (title.className) {
-			node.className = TAB_CLASS + ' ' + title.className + suffix;
-		}
-		else {
-			node.className = TAB_CLASS + suffix;
-		}
-		if (title.icon) {
-			icon.className = ICON_CLASS + ' ' + title.icon;
-		}
-		else {
-			icon.className = ICON_CLASS;
-		}
-		text.textContent = title.text;
-	}
-
-	function resetTabPositions(owner) {
-		var children = owner.contentNode.children;
-		for (var i = 0, n = children.length; i < n; ++i) {
-			children[i].style.left = '';
-		}
-	}
-
-	function snapTabLayout(owner) {
-		var layout = [];
-		var children = owner.contentNode.children;
-		for (var i = 0, n = children.length; i < n; ++i) {
-			var node = children[i];
+			var node = tabs[i];
 			var left = node.offsetLeft;
 			var width = node.offsetWidth;
 			var cstyle = window.getComputedStyle(node);
 			var margin = parseInt(cstyle.marginLeft, 10) || 0;
-			layout.push({ margin: margin, left: left, width: width });
+			layout[i] = { margin: margin, left: left, width: width };
 		}
 		return layout;
 	}
+	TabBarPrivate.snapTabLayout = snapTabLayout;
 
-	function detachExceeded(rect, event) {
+	function detachExceeded(data, event) {
+		var rect = data.contentRect;
 		return ((event.clientX < rect.left - DETACH_THRESHOLD) ||
 			(event.clientX >= rect.right + DETACH_THRESHOLD) ||
 			(event.clientY < rect.top - DETACH_THRESHOLD) ||
 			(event.clientY >= rect.bottom + DETACH_THRESHOLD));
 	}
+	TabBarPrivate.detachExceeded = detachExceeded;
+
+	function layoutTabs(tabs, data, event) {
+		var targetIndex = data.index;
+		var targetLeft = event.clientX - data.contentRect.left - data.tabPressX;
+		var targetRight = targetLeft + data.tabWidth;
+		for (var i = 0, n = tabs.length; i < n; ++i) {
+			var style = tabs[i].style;
+			var layout = data.tabLayout[i];
+			var threshold = layout.left + (layout.width >> 1);
+			if (i < data.index && targetLeft < threshold) {
+				style.left = data.tabWidth + data.tabLayout[i + 1].margin + 'px';
+				targetIndex = Math.min(targetIndex, i);
+			}
+			else if (i > data.index && targetRight > threshold) {
+				style.left = -data.tabWidth - layout.margin + 'px';
+				targetIndex = Math.max(targetIndex, i);
+			}
+			else if (i === data.index) {
+				var ideal = event.clientX - data.pressX;
+				var limit = data.contentRect.width - (data.tabLeft + data.tabWidth);
+				style.left = Math.max(-data.tabLeft, Math.min(ideal, limit)) + 'px';
+			}
+			else {
+				style.left = '';
+			}
+		}
+		data.targetIndex = targetIndex;
+	}
+	TabBarPrivate.layoutTabs = layoutTabs;
+
+	function finalizeTabPosition(data) {
+		var ideal;
+		if (data.targetIndex === data.index) {
+			ideal = 0;
+		}
+		else if (data.targetIndex > data.index) {
+			var tgt = data.tabLayout[data.targetIndex];
+			ideal = tgt.left + tgt.width - data.tabWidth - data.tabLeft;
+		}
+		else {
+			var tgt = data.tabLayout[data.targetIndex];
+			ideal = tgt.left - data.tabLeft;
+		}
+		var style = data.tab.style;
+		var limit = data.contentRect.width - (data.tabLeft + data.tabWidth);
+		style.left = Math.max(-data.tabLeft, Math.min(ideal, limit)) + 'px';
+	}
+	TabBarPrivate.finalizeTabPosition = finalizeTabPosition;
+
+	function resetTabPositions(tabs) {
+		for (var i = 0, n = tabs.length; i < n; ++i) {
+			tabs[i].style.left = '';
+		}
+	}
+	TabBarPrivate.resetTabPositions = resetTabPositions;
 })(TabBarPrivate || (TabBarPrivate = {}));
 
-},{"phosphor-arrays":50,"phosphor-domutil":17,"phosphor-properties":34,"phosphor-signaling":35,"phosphor-widget":52}],49:[function(require,module,exports){
+},{"phosphor-arrays":48,"phosphor-domutil":17,"phosphor-signaling":35,"phosphor-widget":50}],47:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -7733,53 +7803,62 @@ var phosphor_stackedpanel_1 = require('phosphor-stackedpanel');
 var phosphor_widget_1 = require('phosphor-widget');
 var tabbar_1 = require('./tabbar');
 
-
 var TAB_PANEL_CLASS = 'p-TabPanel';
+
+var TAB_BAR_CLASS = 'p-TabPanel-tabBar';
+
+var STACKED_PANEL_CLASS = 'p-TabPanel-stackedPanel';
 
 var TabPanel = (function (_super) {
 	__extends(TabPanel, _super);
 
 	function TabPanel() {
 		_super.call(this);
+		this._currentWidget = null;
 		this.addClass(TAB_PANEL_CLASS);
-		var type = this.constructor;
-		this._tabBar = type.createTabBar();
-		this._stackedPanel = type.createStackedPanel();
-		this._tabBar.tabMoved.connect(this.onTabMoved, this);
-		this._tabBar.currentChanged.connect(this.onCurrentChanged, this);
-		this._tabBar.tabCloseRequested.connect(this.onTabCloseRequested, this);
-		this._stackedPanel.widgetRemoved.connect(this.onWidgetRemoved, this);
-		phosphor_boxpanel_1.BoxLayout.setStretch(this._tabBar, 0);
-		phosphor_boxpanel_1.BoxLayout.setStretch(this._stackedPanel, 1);
+		var constructor = this.constructor;
+		this._tabBar = constructor.createTabBar();
+		this._stackedPanel = constructor.createStackedPanel();
+		this._tabBar.tabMoved.connect(this._onTabMoved, this);
+		this._tabBar.currentChanged.connect(this._onCurrentChanged, this);
+		this._tabBar.tabCloseRequested.connect(this._onTabCloseRequested, this);
+		this._stackedPanel.widgetRemoved.connect(this._onWidgetRemoved, this);
 		var layout = new phosphor_boxpanel_1.BoxLayout();
 		layout.direction = phosphor_boxpanel_1.BoxLayout.TopToBottom;
 		layout.spacing = 0;
+		phosphor_boxpanel_1.BoxLayout.setStretch(this._tabBar, 0);
+		phosphor_boxpanel_1.BoxLayout.setStretch(this._stackedPanel, 1);
 		layout.addChild(this._tabBar);
 		layout.addChild(this._stackedPanel);
 		this.layout = layout;
 	}
 
 	TabPanel.createTabBar = function () {
-		return new tabbar_1.TabBar();
+		var tabBar = new tabbar_1.TabBar();
+		tabBar.addClass(TAB_BAR_CLASS);
+		return tabBar;
 	};
 
 	TabPanel.createStackedPanel = function () {
-		return new phosphor_stackedpanel_1.StackedPanel();
+		var stackedPanel = new phosphor_stackedpanel_1.StackedPanel();
+		stackedPanel.addClass(STACKED_PANEL_CLASS);
+		return stackedPanel;
 	};
 
 	TabPanel.prototype.dispose = function () {
 		this._tabBar = null;
 		this._stackedPanel = null;
+		this._currentWidget = null;
 		_super.prototype.dispose.call(this);
 	};
 	Object.defineProperty(TabPanel.prototype, "currentWidget", {
 
 		get: function () {
-			return this._stackedPanel.currentWidget;
+			return this._tabBar.currentItem;
 		},
 
-		set: function (widget) {
-			this._tabBar.currentTitle = widget && widget.title;
+		set: function (value) {
+			this._tabBar.currentItem = value;
 		},
 		enumerable: true,
 		configurable: true
@@ -7790,8 +7869,8 @@ var TabPanel = (function (_super) {
 			return this._tabBar.tabsMovable;
 		},
 
-		set: function (movable) {
-			this._tabBar.tabsMovable = movable;
+		set: function (value) {
+			this._tabBar.tabsMovable = value;
 		},
 		enumerable: true,
 		configurable: true
@@ -7826,52 +7905,50 @@ var TabPanel = (function (_super) {
 	};
 
 	TabPanel.prototype.addChild = function (child) {
-		this._stackedPanel.addChild(child);
-		this._tabBar.addTitle(child.title);
+		this.insertChild(this.childCount(), child);
 	};
 
 	TabPanel.prototype.insertChild = function (index, child) {
+		if (child !== this._currentWidget)
+			child.hide();
 		this._stackedPanel.insertChild(index, child);
-		this._tabBar.insertTitle(index, child.title);
+		this._tabBar.insertItem(index, child);
 	};
 
-	TabPanel.prototype.findWidgetByTitle = function (title) {
-		var panel = this._stackedPanel;
-		for (var i = 0, n = panel.childCount(); i < n; ++i) {
-			var child = panel.childAt(i);
-			if (child.title === title)
-				return child;
-		}
-		return null;
+	TabPanel.prototype._onCurrentChanged = function (sender, args) {
+		var oldWidget = this._currentWidget;
+		var newWidget = args.item;
+		if (oldWidget === newWidget)
+			return;
+		this._currentWidget = newWidget;
+		if (oldWidget)
+			oldWidget.hide();
+		if (newWidget)
+			newWidget.show();
 	};
 
-	TabPanel.prototype.onCurrentChanged = function (sender, args) {
-		this._stackedPanel.currentWidget = this.findWidgetByTitle(args.newValue);
+	TabPanel.prototype._onTabCloseRequested = function (sender, args) {
+		args.item.close();
 	};
 
-	TabPanel.prototype.onTabMoved = function (sender, args) {
-		var child = this._stackedPanel.childAt(args.fromIndex);
-		this._stackedPanel.insertChild(args.toIndex, child);
+	TabPanel.prototype._onTabMoved = function (sender, args) {
+		this._stackedPanel.insertChild(args.toIndex, args.item);
 	};
 
-	TabPanel.prototype.onTabCloseRequested = function (sender, title) {
-		var widget = this.findWidgetByTitle(title);
-		if (widget)
-			widget.close();
-	};
-
-	TabPanel.prototype.onWidgetRemoved = function (sender, widget) {
-		this._tabBar.removeTitle(widget.title);
+	TabPanel.prototype._onWidgetRemoved = function (sender, widget) {
+		if (this._currentWidget === widget)
+			this._currentWidget = null;
+		this._tabBar.removeItem(widget);
 	};
 	return TabPanel;
 })(phosphor_widget_1.Widget);
 exports.TabPanel = TabPanel;
 
-},{"./tabbar":48,"phosphor-boxpanel":4,"phosphor-stackedpanel":45,"phosphor-widget":52}],50:[function(require,module,exports){
+},{"./tabbar":46,"phosphor-boxpanel":4,"phosphor-stackedpanel":41,"phosphor-widget":50}],48:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],51:[function(require,module,exports){
+},{"dup":7}],49:[function(require,module,exports){
 var css = ".p-Widget{box-sizing:border-box;position:relative;overflow:hidden;cursor:default;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.p-Widget.p-mod-hidden{display:none}"; (require("browserify-css").createStyle(css, { "href": "node_modules\\phosphor-widget\\lib\\index.css"})); module.exports = css;
-},{"browserify-css":2}],52:[function(require,module,exports){
+},{"browserify-css":2}],50:[function(require,module,exports){
 
 'use strict';
 function __export(m) {
@@ -7882,7 +7959,7 @@ __export(require('./title'));
 __export(require('./widget'));
 require('./index.css');
 
-},{"./index.css":51,"./layout":53,"./title":54,"./widget":55}],53:[function(require,module,exports){
+},{"./index.css":49,"./layout":51,"./title":52,"./widget":53}],51:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8042,7 +8119,7 @@ var AbstractLayout = (function (_super) {
 })(Layout);
 exports.AbstractLayout = AbstractLayout;
 
-},{"./widget":55,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35}],54:[function(require,module,exports){
+},{"./widget":53,"phosphor-messaging":27,"phosphor-properties":34,"phosphor-signaling":35}],52:[function(require,module,exports){
 
 'use strict';
 var phosphor_properties_1 = require('phosphor-properties');
@@ -8160,7 +8237,7 @@ var TitlePrivate;
 	TitlePrivate.initFrom = initFrom;
 })(TitlePrivate || (TitlePrivate = {}));
 
-},{"phosphor-properties":34,"phosphor-signaling":35}],55:[function(require,module,exports){
+},{"phosphor-properties":34,"phosphor-signaling":35}],53:[function(require,module,exports){
 
 'use strict';
 var __extends = (this && this.__extends) || function (d, b) {
@@ -8598,4 +8675,4 @@ var WidgetPrivate;
 	});
 })(WidgetPrivate || (WidgetPrivate = {}));
 
-},{"./title":54,"phosphor-messaging":27,"phosphor-nodewrapper":29,"phosphor-properties":34,"phosphor-signaling":35}]},{},[1]);
+},{"./title":52,"phosphor-messaging":27,"phosphor-nodewrapper":29,"phosphor-properties":34,"phosphor-signaling":35}]},{},[1]);
