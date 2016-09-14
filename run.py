@@ -13,26 +13,22 @@ from flexx.util.minify import minify
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(THIS_DIR)
-
-modules = ['disposable', 'messaging', 'properties', 'signaling',
-           'boxengine', 'domutil', 'nodewrapper',
-           'widget', 'panel', 'menus',
-           #'gridpanel',
-           'boxpanel', 'splitpanel', 'stackedpanel', 'tabs', 'dockpanel',
-           ]
+        
+modules = 'core', 'dom', 'ui', 'collections',  # 'algorithm'
 
 package = """
 {
   "name": "phosphor-all",
-  "version": "0.0.0",
-  "description": "",
+  "version": "1.0.0",
+  "description": "Phosphor in one JS file.",
   "main": "index.js",
   "scripts": {
     "test": "echo \\"Error: no test specified\\" && exit 1"
   },
   "author": "Almar Klein",
-  "license": "BSD",
-  "dependencies": DEPS
+  "license": "BSD-3-Clause",
+  "repository": "https://github.com/zoofIO/phosphor-all",
+  "dependencies": {"phosphor": "latest"}
 }
 """.strip()
 
@@ -40,12 +36,12 @@ package = """
 
 CODE = """
 window.phosphor.createWidget = function (name) {
-    var ori = phosphor.widget.Widget.createNode;
-    phosphor.widget.Widget.createNode = function() {
+    var ori = phosphor.ui.widget.Widget.createNode;
+    phosphor.ui.widget.Widget.createNode = function() {
         return document.createElement(name);
     };
-    var w = new phosphor.widget.Widget();
-    phosphor.widget.Widget.createNode = ori;
+    var w = new phosphor.ui.widget.Widget();
+    phosphor.ui.widget.Widget.createNode = ori;
     return w;
 };
 """
@@ -60,20 +56,23 @@ def check_call(cmd, **kwargs):
     return subprocess.check_call(cmd, **kwargs)
 
 # Write package.json
-deps_dict = dict([('phosphor-' + m, 'latest') for m in modules])
-package = package.replace('DEPS', json.dumps(deps_dict, indent=4))
 open('package.json', 'wt').write(package)
 
 # Install
 check_call(['npm', 'install'])
 
 # Create index.js
-code = ''
-# for m in modules:
-#     code += 'var %s = require("phosphor-%s");\n' % (m, m)
-code += 'window.phosphor = {};\n'
-for m in modules:
-    code += 'window.phosphor.%s = require("phosphor-%s");\n' % (m, m)
+code = 'window.phosphor = {};\n'
+phosphor_dir = os.path.join(THIS_DIR, 'node_modules', 'phosphor', 'lib')
+for subpackage_name in modules:
+    code += 'window.phosphor.%s = {};\n' %  subpackage_name
+    for module_name in os.listdir(os.path.join(phosphor_dir, subpackage_name)):
+        if not module_name.endswith('.js'):
+            continue
+        module_name = module_name.split('.')[0]
+        t = 'window.phosphor.%s.%s = require("phosphor/lib/%s/%s");\n'
+        code += t % (subpackage_name, module_name, subpackage_name, module_name)
+
 code += CODE
 open('index.js', 'wt').write(code)
 
@@ -81,8 +80,10 @@ open('index.js', 'wt').write(code)
 check_call(['npm', 'install', 'browserify', 'browserify-css', 'uglify'])
 check_call(['browserify', '-g', '[', 'browserify-css', '--minify=true', ']', 
             'index.js', '-o', 'phosphor-all.js'])
-# check_call(['uglify', '-s', 'phosphor-all.js', '-o', 'phosphor-all.min.js'])
-# todo: uglify is broken on windows?
+
+# Uglify breaks if its run from any other drive than C:
+# I only got it from 290 to 210 so I decided not to go through the trouble
+#check_call(['uglify', '-o', 'phosphor-all.min.js', 'phosphor-all.js'])
 
 # Strip comments in non-minified, and add license text once
 text = open('phosphor-all.js', 'rt').read()
