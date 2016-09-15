@@ -14,7 +14,7 @@ from flexx.util.minify import minify
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(THIS_DIR)
         
-modules = 'core', 'dom', 'ui', 'collections',  # 'algorithm'
+modules = 'core', 'dom', 'ui', 'collections', 'algorithm'
 
 package = """
 {
