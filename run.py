@@ -75,8 +75,27 @@ text = minify(text, False)
 text = LICENSE + text
 open('phosphor-all.js', 'wt').write(text)
 
+
+def css_prefixer(text):
+    """ Prefix Phosphor CSS with .flx-Widget so it does not interfere
+    with other Phosphor JS on the page.
+    """
+    lines = []
+    for line in text.splitlines():
+        if '.p-' in line:
+            p_selectors = [p.strip() for p in line.strip(' {').split(',')]
+            p_selectors = [p for p in p_selectors if p.startswith('.p-')]
+            if p_selectors:
+                if line.startswith('.p-') and len(p_selectors) == 1:
+                    line = '.flx-Widget ' + line
+                else:
+                    raise ValueError('Cannot yet parse multiple selectors per line.')
+        lines.append(line)
+    return '\n'.join(lines)
+    
 # Copy minified and licence-added version of Phosphor's base.css
 text = open('node_modules/phosphor/styles/base.css', 'rt').read()
-text = minify(text, False)
-text = LICENSE + text
+text += open('more_phosphor.css', 'rt').read()
+text = css_prefixer(minify(text, False))
+text = "/* Phosphor CSS, prefixed for Flexx */\n\n" + LICENSE + text
 open('phosphor-all.css', 'wt').write(text)
