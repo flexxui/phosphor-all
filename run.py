@@ -87,7 +87,10 @@ def css_prefixer(text):
             p_selectors = [p for p in p_selectors if p.startswith('.p-')]
             if p_selectors:
                 if line.startswith('.p-') and len(p_selectors) == 1:
-                    line = '.flx-Widget ' + line
+                    if p_selectors[0] == '.p-Widget':
+                        line = line.replace('.p-Widget', '.flx-Widget')
+                    else:
+                        line = '.flx-Widget ' + line
                 else:
                     raise ValueError('Cannot yet parse multiple selectors per line.')
         lines.append(line)

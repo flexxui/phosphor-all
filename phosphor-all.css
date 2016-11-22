@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 body.p-mod-override-cursor * {
   cursor: inherit !important;
 }
-.flx-Widget .p-Widget {
+.flx-Widget {
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
