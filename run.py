@@ -4,16 +4,25 @@ install and bundle them in one standalone js file. Needs npm with
 browserify and uglify.
 """
 
-import subprocess
-import sys
 import os
+import sys
+import subprocess
+import os.path as op
 
 from flexx.util.minify import minify
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-os.chdir(THIS_DIR)
 
-modules = 'core', 'dom', 'ui', 'collections', 'algorithm'
+## Prepare
+
+THIS_DIR = op.dirname(op.abspath(__file__))
+WORK_DIR = op.join(THIS_DIR, 'build')
+DIST_DIR = op.join(THIS_DIR, 'dist')
+
+for d in (WORK_DIR, DIST_DIR):
+    if not op.isdir(d):
+        os.mkdir(d)
+
+MODULES = 'core', 'dom', 'ui', 'collections', 'algorithm'
 
 package = """
 {
@@ -34,46 +43,34 @@ package = """
 """.strip()
 
 
-LICENSE = '/*\n%s\n*/\n' % open('phosphor_license.txt', 'rb').read().decode().strip()
+## Utils
+
+def write(filename, text):
+    with open(filename, 'wt') as file:
+        file.write(text)
+    print('wrote', filename)
+
 
 def check_call(cmd, **kwargs):
-    kwargs['cwd'] = THIS_DIR
+    kwargs['cwd'] = WORK_DIR
     if sys.platform.startswith('win'):
         kwargs['shell'] = True
     return subprocess.check_call(cmd, **kwargs)
 
-# Write package.json
-open('package.json', 'wt').write(package)
 
-# Install
-check_call(['npm', 'install'])
-
-# Create index.js
-code = 'window.phosphor = {};\n'
-phosphor_dir = os.path.join(THIS_DIR, 'node_modules', 'phosphor', 'lib')
-for subpackage_name in modules:
-    code += 'window.phosphor.%s = {};\n' % subpackage_name
-    for module_name in os.listdir(os.path.join(phosphor_dir, subpackage_name)):
-        if not module_name.endswith('.js'):
-            continue
-        module_name = module_name.split('.')[0]
-        t = 'window.phosphor.%s.%s = require("phosphor/lib/%s/%s");\n'
-        code += t % (subpackage_name, module_name, subpackage_name, module_name)
-
-open('index.js', 'wt').write(code)
-
-# Create bundle
-check_call(['npm', 'run', 'bundle'])
-
-# Uglify breaks if its run from any other drive than C:
-# I only got it from 290 to 210 so I decided not to go through the trouble
-#check_call(['uglify', '-o', 'phosphor-all.min.js', 'phosphor-all.js'])
-
-# Perform our own lightweight minification, and add license text once
-text = open('phosphor-all.js', 'rt').read()
-text = minify(text, False)
-text = LICENSE + text
-open('phosphor-all.js', 'wt').write(text)
+def create_index():
+    # Create index.js
+    code = 'window.phosphor = {};\n'
+    phosphor_dir = op.join(WORK_DIR, 'node_modules', 'phosphor', 'lib')
+    for subpackage_name in MODULES:
+        code += 'window.phosphor.%s = {};\n' % subpackage_name
+        for module_name in os.listdir(op.join(phosphor_dir, subpackage_name)):
+            if not module_name.endswith('.js'):
+                continue
+            module_name = module_name.split('.')[0]
+            t = 'window.phosphor.%s.%s = require("phosphor/lib/%s/%s");\n'
+            code += t % (subpackage_name, module_name, subpackage_name, module_name)
+    return code
 
 
 def css_prefixer(text):
@@ -95,10 +92,36 @@ def css_prefixer(text):
                     raise ValueError('Cannot yet parse multiple selectors per line.')
         lines.append(line)
     return '\n'.join(lines)
-    
-# Copy minified and licence-added version of Phosphor's base.css
-text = open('node_modules/phosphor/styles/base.css', 'rt').read()
-text += open('more_phosphor.css', 'rt').read()
-text = css_prefixer(minify(text, False))
-text = "/* Phosphor CSS, prefixed for Flexx */\n\n" + LICENSE + text
-open('phosphor-all.css', 'wt').write(text)
+
+
+## Run npm
+
+# Write package spec so npm knows our dependencies
+write(op.join(WORK_DIR, 'package.json'), package)
+
+# Install/update dependencies
+check_call(['npm', 'install'])
+
+# Write our index file (needs previous step)
+write(op.join(WORK_DIR, 'index.js'), create_index())
+
+# Create bundle
+check_call(['npm', 'run', 'bundle'])
+
+
+## Produce dist result
+
+# Get sources
+phosphor_js = open(op.join(WORK_DIR, 'phosphor-all.js'), 'rt').read()
+phosphor_css = open(op.join(WORK_DIR, 'node_modules/phosphor/styles/base.css'), 'rt').read()
+phosphor_license = open(op.join(WORK_DIR, 'node_modules/phosphor/LICENSE'), 'rt').read()
+
+# Process JS asset
+js = phosphor_license + minify(phosphor_js, False)
+write(op.join(DIST_DIR, 'phosphor-all.js'), js)
+
+# Process CSS asset
+css = phosphor_css + open(op.join(THIS_DIR, 'more_phosphor.css'), 'rt').read()
+css = css_prefixer(minify(css, False))
+css = "/* Phosphor CSS, prefixed for Flexx */\n\n" + phosphor_license + css
+write(op.join(DIST_DIR, 'phosphor-all.css'), css)
