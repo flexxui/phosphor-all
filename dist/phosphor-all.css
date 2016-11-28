@@ -1,0 +1,341 @@
+/* Phosphor CSS, prefixed for Flexx */
+
+/*
+Copyright (c) 2014-2016, PhosphorJS Contributors
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+body.p-mod-override-cursor * {
+	cursor: inherit !important;
+}
+.flx-Widget {
+	box-sizing: border-box;
+	position: relative;
+	overflow: hidden;
+	cursor: default;
+}
+.flx-Widget .p-Widget.p-mod-hidden {
+	display: none;
+}
+.flx-Widget .p-CommandPalette {
+	display: flex;
+	flex-direction: column;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.flx-Widget .p-CommandPalette-search {
+	flex: 0 0 auto;
+}
+.flx-Widget .p-CommandPalette-content {
+	flex: 1 1 auto;
+	margin: 0;
+	padding: 0;
+	min-height: 0;
+	overflow: auto;
+	list-style-type: none;
+}
+.flx-Widget .p-CommandPalette-header {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-transform: capitalize;
+}
+.flx-Widget .p-CommandPalette-itemShortcut {
+	float: right;
+}
+.flx-Widget .p-CommandPalette-itemLabel {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.flx-Widget .p-Menu {
+	position: absolute;
+	white-space: nowrap;
+	overflow-x: hidden;
+	overflow-y: auto;
+	outline: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.flx-Widget .p-Menu-content {
+	margin: 0;
+	padding: 0;
+	display: table;
+	list-style-type: none;
+}
+.flx-Widget .p-Menu-item {
+	display: table-row;
+}
+.flx-Widget .p-Menu-item.p-mod-hidden {
+	display: none;
+}
+.flx-Widget .p-Menu-itemIcon,
+.flx-Widget .p-Menu-itemSubmenuIcon {
+	display: table-cell;
+	text-align: center;
+}
+.flx-Widget .p-Menu-itemLabel {
+	display: table-cell;
+	text-align: left;
+}
+.flx-Widget .p-Menu-itemShortcut {
+	display: table-cell;
+	text-align: right;
+}
+.flx-Widget .p-MenuBar {
+	outline: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.flx-Widget .p-MenuBar-content {
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: row;
+	list-style-type: none;
+}
+.flx-Widget .p-MenuBar-item {
+	box-sizing: border-box;
+}
+.flx-Widget .p-MenuBar-itemIcon,
+.flx-Widget .p-MenuBar-itemLabel {
+	display: inline-block;
+}
+.flx-Widget .p-SplitPanel-child {
+	z-index: 0;
+}
+.flx-Widget .p-SplitPanel-handle {
+	z-index: 1;
+}
+.flx-Widget .p-SplitPanel-handle.p-mod-hidden {
+	display: none;
+}
+.flx-Widget .p-SplitPanel-handle:after {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	content: '';
+}
+.flx-Widget .p-SplitPanel.p-mod-horizontal > .p-SplitPanel-handle {
+	cursor: ew-resize;
+}
+.flx-Widget .p-SplitPanel.p-mod-vertical > .p-SplitPanel-handle {
+	cursor: ns-resize;
+}
+.flx-Widget .p-SplitPanel.p-mod-horizontal > .p-SplitPanel-handle:after {
+	left: 50%;
+	min-width: 8px;
+	transform: translateX(-50%);
+}
+.flx-Widget .p-SplitPanel.p-mod-vertical > .p-SplitPanel-handle:after {
+	top: 50%;
+	min-height: 8px;
+	transform: translateY(-50%);
+}
+.flx-Widget .p-TabBar {
+	display: flex;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.flx-Widget .p-TabBar.p-mod-horizontal {
+	flex-direction: row;
+}
+.flx-Widget .p-TabBar.p-mod-vertical {
+	flex-direction: column;
+}
+.flx-Widget .p-TabBar-content {
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex: 1 1 auto;
+	list-style-type: none;
+}
+.flx-Widget .p-TabBar.p-mod-horizontal > .p-TabBar-content {
+	flex-direction: row;
+}
+.flx-Widget .p-TabBar.p-mod-vertical > .p-TabBar-content {
+	flex-direction: column;
+}
+.flx-Widget .p-TabBar-tab {
+	display: flex;
+	flex-direction: row;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+.flx-Widget .p-TabBar-tabIcon,
+.flx-Widget .p-TabBar-tabCloseIcon {
+	flex: 0 0 auto;
+}
+.flx-Widget .p-TabBar-tabLabel {
+	flex: 1 1 auto;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.flx-Widget .p-TabBar-tab.p-mod-hidden {
+	display: none;
+}
+.flx-Widget .p-TabBar.p-mod-dragging .p-TabBar-tab {
+	position: relative;
+}
+.flx-Widget .p-TabBar.p-mod-horizontal.p-mod-dragging .p-TabBar-tab {
+	left: 0;
+	transition: left 150ms ease;
+}
+.flx-Widget .p-TabBar.p-mod-vertical.p-mod-dragging .p-TabBar-tab {
+	top: 0;
+	transition: top 150ms ease;
+}
+.flx-Widget .p-TabBar.p-mod-dragging .p-TabBar-tab.p-mod-dragging {
+	transition: none;
+}
+.flx-Widget .p-TabPanel-tabBar {
+	z-index: 1;
+}
+.flx-Widget .p-TabPanel-stackedPanel {
+	z-index: 0;
+}
+.flx-Widget .p-DockPanel {
+	z-index: 0;
+}
+.flx-Widget .p-DockPanel-widget {
+	z-index: 0;
+}
+.flx-Widget .p-DockPanel-tabBar {
+	z-index: 1;
+}
+.flx-Widget .p-DockPanel-handle {
+	z-index: 2;
+}
+.flx-Widget .p-DockPanel-handle.p-mod-hidden {
+	display: none;
+}
+.flx-Widget .p-DockPanel-handle:after {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	content: '';
+}
+.flx-Widget .p-DockPanel-handle.p-mod-horizontal {
+	cursor: ew-resize;
+}
+.flx-Widget .p-DockPanel-handle.p-mod-vertical {
+	cursor: ns-resize;
+}
+.flx-Widget .p-DockPanel-handle.p-mod-horizontal:after {
+	left: 50%;
+	min-width: 8px;
+	transform: translateX(-50%);
+}
+.flx-Widget .p-DockPanel-handle.p-mod-vertical:after {
+	top: 50%;
+	min-height: 8px;
+	transform: translateY(-50%);
+}
+.flx-Widget .p-DockPanel-overlay {
+	z-index: 3;
+	box-sizing: border-box;
+	pointer-events: none;
+}
+.flx-Widget .p-DockPanel-overlay.p-mod-hidden {
+	display: none;
+}
+.flx-Widget .p-DockPanel-overlay {
+	background: rgba(255, 255, 255, 0.6);
+	border: 2px solid rgba(0, 0, 0, 0.6);;
+	transition-property: top, left, right, bottom;
+	transition-duration: 100ms;
+	transition-timing-function: ease;
+}
+.flx-Widget .p-TabBar {
+	min-height: 24px;
+	max-height: 24px;
+}
+.flx-Widget .p-TabBar-content {
+	min-width: 0;
+	min-height: 0;
+	align-items: flex-end;
+	border-bottom: 1px solid #C0C0C0;
+}
+.flx-Widget .p-TabBar-tab {
+	padding: 0px 10px;
+	background: #E5E5E5;
+	border: 1px solid #C0C0C0;
+	border-bottom: none;
+	font: 12px Helvetica, Arial, sans-serif;
+	flex: 0 1 125px;
+	min-height: 20px;
+	max-height: 20px;
+	min-width: 35px;
+	margin-left: -1px;
+	line-height: 20px;
+}
+.flx-Widget .p-TabBar-tab.p-mod-current {
+	background: white;
+}
+.flx-Widget .p-TabBar-tab:hover:not(.p-mod-current) {
+	background: #F0F0F0;
+}
+.flx-Widget .p-TabBar-tab:first-child {
+	margin-left: 0;
+}
+.flx-Widget .p-TabBar-tab.p-mod-current {
+	min-height: 23px;
+	max-height: 23px;
+	transform: translateY(1px);
+}
+.flx-Widget .p-TabBar-tabIcon,
+.flx-Widget .p-TabBar-tabLabel,
+.flx-Widget .p-TabBar-tabCloseIcon {
+	display: inline-block;
+}
+.flx-Widget .p-TabBar-tab.p-mod-closable > .p-TabBar-tabCloseIcon {
+	margin-left: 4px;
+}
+.flx-Widget .p-TabBar-tab.p-mod-closable > .p-TabBar-tabCloseIcon:before {
+	content: '\f00d';
+	font-family: FontAwesome;
+}
+.flx-Widget .p-TabBar-tab.p-mod-drag-image {
+	min-height: 23px;
+	max-height: 23px;
+	min-width: 125px;
+	border: none;
+	box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+	transform: translateX(-40%) translateY(-58%);
+}
